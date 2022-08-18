@@ -8,9 +8,9 @@
                 <!-- 头像/用户名区 -->
                 <div class="userdata">
                     <div class="l">
-                        <img :src="BASEURL + articleInfo.user_avatar" alt="">
+                        <img :src="BASEURL + articleInfo.user.avatar" alt="">
                         <div class="username">
-                            <span>{{ articleInfo.nickname }}</span>
+                            <span>{{ articleInfo.user.nickname }}</span>
                             <span>{{ _getdate(articleInfo.createdAt) }}</span>
                         </div>
                     </div>
@@ -68,16 +68,26 @@
 
         <!-- 左侧定位区 -->
         <ul class="navigation">
-            <li @click="increment_like" class="increment_like">
-                <i class="iconfont icon-dianzan_kuai"></i>
-                <span class="num"> {{ articleInfo.like }} </span>
+            <!-- 点赞 -->
+            <li @click="add_of_delete_like()" class="increment_like">
+                <i class="iconfont icon-dianzan_kuai" :class="{ like: articleInfo.articleLikes.includes(userInfo.id) }">
+                </i>
+                <span class="num" :class="{ like2: articleInfo.articleLikes.includes(userInfo.id) }"> {{
+                        articleInfo.like
+                }}
+                </span>
             </li>
+            <!-- 评论数 -->
             <li class="comments" @click="_tocommentBox(0)">
                 <i class="iconfont icon-pinglun4"></i>
                 <span class="num"> {{ commentsStore.commentList.length }} </span>
             </li>
             <li><i class="iconfont icon-shoucang-shoucang"></i></li>
         </ul>
+    </div>
+    <!--回到顶部 -->
+    <div class="totop" v-show="toTop">
+        <a href="javascript:window.scrollTo(0,0)" class="iconfont icon-18huidaodingbu"></a>
     </div>
 </template>
 
@@ -93,7 +103,7 @@ import Comment from '../Comment/Comment.vue';
 import { onBeforeRouteLeave, useRoute } from 'vue-router';
 import { successNotify, warningNotify } from '@/utils/notification';
 import { useCommentsStore } from '@/stores/comment';
-import { incrementApi } from "@/api/article";
+import { changeLike } from "@/api/articleLike";
 const articleStore = useArticleStore()
 const { articleInfo } = storeToRefs(articleStore)
 const userStore = useUserStore()
@@ -101,7 +111,6 @@ const { userInfo } = storeToRefs(userStore)
 const commentsStore = useCommentsStore()
 const route = useRoute()
 //#endregion
-
 
 onMounted(() => {
     nextTick(() => {
@@ -118,46 +127,41 @@ onMounted(() => {
 
     //  进入评论区
     if (route.params.toComment === 'toComment') {
-        _tocommentBox(250)
+        _tocommentBox(200)
     }
 
-
-
-
-
 })
+
 onBeforeRouteLeave((to, from, next) => {
     window.removeEventListener('scroll', _getAnchorElementTop)
     next()
 })
+
 // 日期格式化
 function _getdate(dateStr: string) {
     const date = new Date(dateStr)
     return `${date.getFullYear()}年${date.getMonth()}月${date.getDate()}日  ${date.getHours()}:${date.getMinutes()}`
 }
 
-//#region 
+// 是否显示 “回到顶部” 按钮
+const toTop = ref<boolean>(false)
+
 // 发布评论
+//#region 
 const comment = reactive({
     content: "",
-    article_id: 0,
-    user_id: 0,
-    user_name: '',
-    user_nickname: "",
-    user_avatar: ""
+    article_id: articleInfo.value.id,
+    user_id: userInfo.value.id,
+    user_name: userInfo.value.user_name,
+    user_nickname: userInfo.value.nickname,
+    user_avatar: userInfo.value.avatar
 })
-
 // 发布评论
 async function releaseComment() {
     if (comment.content.trim() == '') {
         warningNotify({ message: "输入不能为空" })
         return
     }
-    comment.article_id = articleInfo.value.id
-    comment.user_id = userInfo.value.id
-    comment.user_name = userInfo.value.user_name
-    comment.user_nickname = userInfo.value.nickname
-    comment.user_avatar = userInfo.value.avatar
     try {
         const res = await addComment(comment)
         // 调用子组件方法重新获取评论数据
@@ -176,11 +180,33 @@ async function releaseComment() {
 //#endregion
 
 
+// 跳转到评论区
+function _tocommentBox(timeout: number) {
+    setTimeout(() => {
+        document.querySelector('.pl')!.scrollIntoView()
+        _getAnchorElementTop()
+    }, timeout);
+}
+
+// 用户是否点赞 返回(true点赞)(false取消点赞)
+async function add_of_delete_like() {
+    const res = await changeLike({ article_id: articleInfo.value.id, user_id: userInfo.value.id })
+    if (res.data) {
+        articleInfo.value.like++
+        articleInfo.value.articleLikes.push(userInfo.value.id)
+    } else {
+        articleInfo.value.like--
+        const i = articleInfo.value.articleLikes.indexOf(userInfo.value.id)
+        articleInfo.value.articleLikes.splice(i, 1)
+    }
+    console.log(' ', articleInfo.value.articleLikes.includes(userInfo.value.id))
+}
+
 
 
 let titles = reactive<any>([])
 const preview = ref()
-//事件监控： 锚点跟踪相关
+//事件监控： 锚点跟踪相关--- 附加（是否显示回到顶部）
 function _getAnchorElementTop() {
     // 获取v-md-editor中的所有标题信息
     const titleEleList = titles.map((title: any) => {
@@ -200,6 +226,12 @@ function _getAnchorElementTop() {
             const GDTscrollTop = window.pageYOffset ||
                 document.documentElement.scrollTop ||
                 document.body.scrollTop
+            // 是否显示回到顶部
+            if (GDTscrollTop > 800) {
+                toTop.value = true
+            } else {
+                toTop.value = false
+            }
             return ele.offsetTop - GDTscrollTop
         }
         return obj
@@ -249,14 +281,6 @@ function _getAnchorElementTop() {
             el_affix_div.scrollTop = aTop - (gdEleH / 2 - 20)
         }
     }
-}
-
-// 跳转到评论区
-function _tocommentBox(timeout: number) {
-    setTimeout(() => {
-        _getAnchorElementTop()
-        document.querySelector('.pl')!.scrollIntoView()
-    }, timeout);
 }
 
 
@@ -316,17 +340,7 @@ function handleAnchorClick(anchor: any) {
 }
 //#endregion
 
-// 点赞  
-async function increment_like() {
-    try {
-        const res = await incrementApi({ id: articleInfo.value.id, increment_item: "like" })
-        if (res.code === 200) {
-            articleInfo.value.like++
-        }
-    } catch (error) {
-        console.log('error', error)
-    }
-}
+
 
 
 </script>
@@ -385,7 +399,8 @@ async function increment_like() {
                         span:nth-child(1) {
 
                             // color: rgb(81, 87, 103);
-                            color: rgb(93, 93, 239);
+                            // color: rgb(93, 93, 239);
+                            color: #515767;
                             font-size: 16px;
                             line-height: 24px;
                         }
@@ -597,6 +612,15 @@ async function increment_like() {
     transform: translateX(-186%);
     list-style: none;
 
+    // 点赞(true的样式)
+    .like {
+        color: #1e80ff !important;
+    }
+
+    .like2 {
+        background-color: #338bfd !important;
+    }
+
     li {
         user-select: none;
         cursor: pointer;
@@ -634,8 +658,22 @@ async function increment_like() {
             padding: 0 4px;
         }
     }
+}
 
+.totop {
+    width: 50px;
+    height: 50px;
+    position: fixed;
+    right: 30px;
+    bottom: 50px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    text-align: center;
 
-
+    a {
+        font-size: 26px;
+        color: #909090;
+        line-height: 50px;
+    }
 }
 </style>

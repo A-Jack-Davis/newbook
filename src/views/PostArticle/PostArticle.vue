@@ -61,7 +61,7 @@ const { userInfo } = storeToRefs(userStore)
 
 // 文章信息
 const articleInfo = reactive({
-    user_avatar: userInfo.value.avatar,
+    user_id: userInfo.value.id,
     cover_url: "/admin/articleimg/10/articleimg20220810103347.png",
     title: "【万字】透过分析webpack面试题，构建webpack5,x知识体系",
     content: "# 基础\n\n## 基础使用\n\n**`Webpack` 是一个静态资源打包工具。**\n\n它会以**一个**或**多个**文件作为打包的入口，将我们整个项目所有文件编译组合成**一个**或**多个**文件输出出去。\n\n输出的文件就是编译好的文件，就可以在浏览器段运行了。我们将 `Webpack` 输出的文件叫做 `bundle`。\n\n### 功能介绍\n\nWebpack 本身功能是有限的:\n\n- 开发模式：仅能编译 JS 中的 `ES Module` 语法\n- 生产模式：能编译 JS 中的 `ES Module` 语法，还能**压缩 JS**代码\n\n### 开始使用\n\n`1.资源目录`\n\n```js\nwebpack_code # 项目根目录（所有指令必须在这个目录运行）\n    └── src # 项目源码目录\n        ├── js # js文件目录\n        │   ├── count.js\n        │   └── sum.js\n        └── main.js # 项目主文件\n```\n\n```js\nfunction debounce(callback, delay) {\n\tlet timer = null;\n\treturn function () {\n\t\tclearTimeout(timer);\n\t\ttimer = setTimeout(() => {\n\t\t\tcallback.bind(this)();\n\t\t}, delay);\n\t}\n}\n```\n\n## 思路\n\n1. 先创建一个临时文件夹，存储编写时的图片\n2. 每次编写前清空临时文件夹\n3. 发布时：修改text再请求\n4. 将临时文件夹下文件移动到：**文章文件夹**\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
@@ -108,7 +108,6 @@ async function release() {
         return
     }
     router.push('/home/index')
-    Object.assign(articleInfo, { user_id: userInfo.value.id, nickname: userInfo.value.nickname })
     try {
         const res = await addArticleApi(articleInfo)
         if (res.code === 200) {

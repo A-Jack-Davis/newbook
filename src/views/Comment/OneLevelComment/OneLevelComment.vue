@@ -8,7 +8,7 @@
                 <!-- 评论者用户名 -->
                 <div class="name">
                     <span>{{ comment.user_nickname ? comment.user_nickname : comment.user_name }}</span>
-                    <i v-if="articleStore.articleInfo.user_id == comment.user_id" class="iconfont icon-xinrenzhinan">
+                    <i v-if="articleStore.articleInfo.user.id == comment.user_id" class="iconfont icon-xinrenzhinan">
                         <i>(作者) </i>
                     </i>
                     <!-- 发布时间 -->
@@ -63,6 +63,37 @@ const userStore = useUserStore()
 const articleStore = useArticleStore()
 const commentsStore = useCommentsStore()
 
+// 定义一级评论props
+const props = defineProps<{
+    comment: {
+        id: number,
+        article_id?: number,
+        like: number,
+        content?: string,
+        user_id?: number,
+        user_name?: string,
+        user_nickname?: string,
+        user_avatar?: string,
+        createdAt: string,
+        recomments?: Array<{
+            id: number,
+            re_content: string,
+            comment_id: number,
+            like: number,
+            user_nickname: string,
+            user_name: string,
+            user_id: number,
+            user_avatar: string,
+            type: number,
+            f_nickname?: string,
+            f_user_name?: string,
+            f_user_id?: number,
+            f_user_avatar?: string,
+            f_re_content?: string,
+            createdAt: string
+        }>
+    }
+}>()
 
 
 
@@ -153,37 +184,6 @@ const recomment = reactive<any>({
     user_avatar: "",
     type: 2
 })
-// 定义一级评论props
-const props = defineProps<{
-    comment: {
-        id: number,
-        article_id?: number,
-        like: number,
-        content?: string,
-        user_id?: number,
-        user_name?: string,
-        user_nickname?: string,
-        user_avatar?: string,
-        createdAt: string,
-        recomments?: Array<{
-            id: number,
-            re_content: string,
-            comment_id: number,
-            like: number,
-            user_nickname: string,
-            user_name: string,
-            user_id: number,
-            user_avatar: string,
-            type: number,
-            f_nickname?: string,
-            f_user_name?: string,
-            f_user_id?: number,
-            f_user_avatar?: string,
-            f_re_content?: string,
-            createdAt: string
-        }>
-    }
-}>()
 
 
 </script>

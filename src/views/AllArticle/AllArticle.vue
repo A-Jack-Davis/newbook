@@ -1,9 +1,14 @@
 <template>
-    <div class="article" v-for="(article, indexe) in articleList" :key="article.id" @click="toAticle(article.id)">
+    <div class="header">
+        <span @click="order = 'recommended'" :class="{ active: order === 'recommended' }">推荐</span>
+        <span @click="order = 'theLatest'" :class="{ active: order === 'theLatest' }">最新</span>
+        <span @click="order = 'hotList'" :class="{ active: order === 'hotList' }">热榜</span>
+    </div>
+    <div class="article" v-for="(article, index) in articleList" :key="article.id" @click="toAticle(article.id)">
         <div class="info">
-            <span>{{ article.nickname }}</span>
-            <span>2月前</span>
-            <span>Vue.js</span>
+            <span>{{ article.user.nickname }}</span>
+            <span>{{ timeAgo(article.createdAt) }}</span>
+            <!-- <span>Vue.js</span> -->
         </div>
         <div class="content">
             <div class="l">
@@ -15,17 +20,22 @@
                 </p>
                 <!-- 文章访问信息 -->
                 <div class="floot">
+                    <!-- 浏览量 -->
                     <button>
                         <el-icon>
                             <View />
                         </el-icon>
                         <i>{{ article.pageviews }}</i>
                     </button>
-                    <button @click.stop="increment('like', article, indexe)">
-                        <i class="iconfont icon-dianzan">
-                        </i>
-                        <i :key="article.like">{{ article.like }}</i>
+                    <!-- 点赞 -->
+                    <button @click.stop="add_of_delete_like(article.id, index)">
+                        <i class="iconfont" :class="{
+                            'icon-dianzan': !article.articleLikes.includes(userStore.userInfo.id),
+                            'icon-dianzan_kuai': article.articleLikes.includes(userStore.userInfo.id)
+                        }"> </i>
+                        <i>{{ article.like }}</i>
                     </button>
+                    <!-- 去评论区 -->
                     <button @click="toComment">
                         <el-icon>
                             <ChatLineRound />
@@ -62,22 +72,26 @@
         </div>
         <img src="@/assets/imgs/empty.png" alt="">
     </div>
+    <!--回到顶部 -->
+    <div class="totop" v-show="toTop">
+        <a href="javascript:window.scrollTo(0,0)" class="iconfont icon-18huidaodingbu"></a>
+    </div>
 </template>
     
 <script setup lang='ts'>
+import timeAgo from '@/utils/timeAgo'
 import { BASEURL } from "@/const/VARIABLE"
-import { getAllArticleApi, incrementApi } from '@/api/article';
+import { getAllArticleApi, addPageviewsApi } from '@/api/article';
 import { useArticleStore } from '@/stores/article';
 import { ChatLineRound, View, } from '@element-plus/icons-vue';
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
+import { changeLike } from '@/api/articleLike';
+import { useUserStore } from '@/stores/user';
 const aticleStore = useArticleStore()
 const router = useRouter()
+const userStore = useUserStore()
 
-// 是否在发送请求获取文章
-const newApi = ref<boolean>(false)
-const loading = ref<boolean>(false)
-const emptyShow = ref<boolean>(false)
 onMounted(() => {
     // 挂载时获取文章列表
     getAticleList()
@@ -89,30 +103,45 @@ onBeforeRouteLeave((to, from, next) => {
     window.removeEventListener('scroll', lazyLoading)
     next()
 })
-/**
- * @description: 滚动到底，加载文章数据 
- * @return {object}
- */
+
+
+
+// 是否在发送请求获取文章
+const isRequesting = ref<boolean>(false)
+// 显示 加载中
+const loading = ref<boolean>(false)
+// 显示没有更多
+const emptyShow = ref<boolean>(false)
+// 是否显示 “回到顶部” 按钮
+const toTop = ref<boolean>(false)
+
+
+// 滚动到底，加载文章数据 ，动态判断是否显示“回到顶部”
 async function lazyLoading() {
     // 滚动到底部，再加载的处理事件
     // 获取 可视区高度`、`滚动高度`、`页面高度`
     let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
     let clientHeight = document.documentElement.clientHeight;
     let scrollHeight = document.documentElement.scrollHeight;
+    // 是否显示回到顶部
+    if (scrollTop > 800) {
+        toTop.value = true
+    } else {
+        toTop.value = false
+    }
     if (scrollTop + clientHeight >= scrollHeight - 200) { // 滚动到底部，逻辑代码
         //事件处理
-        if (newApi.value) return
-        newApi.value = true
+        if (isRequesting.value) return
+        isRequesting.value = true
         if (queryInfo.offset < count.value) {
             queryInfo.offset += queryInfo.limit
             loading.value = true
             setTimeout(async () => {
-                const res = await getAllArticleApi(queryInfo)
+                const res = await getAllArticleApi({ offset: queryInfo.offset, limit: queryInfo.limit, order: JSON.stringify(queryInfo.order) })
                 count.value = res.count
                 if (res.code === 200) {
                     articleList.push(...res.data)
-
-                    newApi.value = false
+                    isRequesting.value = false
                     loading.value = false
                     if (res.data.length == 0) {
                         emptyShow.value = true
@@ -124,37 +153,55 @@ async function lazyLoading() {
     }
 }
 
-
-
 // 文章信息列表
 let articleList: Array<any> | Array<{
     id: number,
     title: string,
     content: string,
     cover_url: string,
-    nickname: string,
-    user_id: number,
-    createdAt: string,
     introduction: string,
-    like: number,
     pageviews: number,
     comments: number
-    updatedAt: string
+    createdAt: string,
+    user: Array<{
+        id: number
+        nickname: string,
+        avatar: string
+    }>,
+    articleLikes: Array<number>
 }> = reactive([])
 // 文章总数
 const count = ref(0)
 // 文章分页信息
 const queryInfo = reactive({
     offset: 0,
-    limit: 15
+    limit: 15,
+    order: [['like', 'DESC']],
 })
+// 获取文章方式  推荐（热）/ 最新 / 热榜(热+新)
+const order = ref<'recommended' | "theLatest" | "hotList">('recommended')
 
 
+// 监控 -->获取文章方式
+watch(order, (newValue, oldValue) => {
+    queryInfo.order.length = 0
+    if (newValue === 'recommended') {
+        queryInfo.order.push(['like', 'DESC'])
+    } else if (newValue === "theLatest") {
+        queryInfo.order.push(['createdAt', 'DESC'])
+    } else if (newValue === "hotList") {
+        queryInfo.order.push(['like', 'DESC'], ['createdAt', 'DESC'])
+    }
+    articleList.length = 0
+    queryInfo.offset = 0
+    // queryInfo.limit = 15
+    getAticleList()
+})
 
 // 获取文章列表
 async function getAticleList() {
     try {
-        const res = await getAllArticleApi(queryInfo)
+        const res = await getAllArticleApi({ offset: queryInfo.offset, limit: queryInfo.limit, order: JSON.stringify(queryInfo.order) })
         if (res.code === 200) {
             articleList.push(...res.data)
             count.value = res.count
@@ -170,16 +217,15 @@ const _toChString = (str: string) => str.replace(/([^\u4e00-\u9fa5 。，’‘�
 
 // 路由跳转-->article
 async function toAticle(id: number) {
-    await aticleStore.getArticleIno(id)
-    router.push('/home/article')
-    incrementApi({ id, increment_item: "pageviews" })
+    try {
+        await aticleStore.getArticleIno(id)
+        router.push('/home/article')
+        addPageviewsApi(id)
+    } catch (error) {
+        console.log('error', error)
+    }
 }
 
-// 点赞 或 递增浏览量
-async function increment(increment_item: "like" | "pageviews", article: any, index: number) {
-    const res = await incrementApi({ id: article.id, increment_item })
-    articleList[index] = res.data
-}
 
 // 进入评论区
 async function toComment() {
@@ -191,10 +237,45 @@ async function toComment() {
     })
 }
 
+// 用户是否点赞 返回(true点赞)(false取消点赞)
+async function add_of_delete_like(article_id: number, index: number) {
+    const res = await changeLike({ article_id, user_id: userStore.userInfo.id })
+    if (res.data) {
+        articleList[index].like++
+        articleList[index].articleLikes.push(userStore.userInfo.id)
+    } else {
+        articleList[index].like--
+        const i = articleList[index].articleLikes.indexOf(userStore.userInfo.id)
+        articleList[index].articleLikes.splice(i, 1)
+    }
+}
+
 
 </script>
     
 <style lang='less' scoped>
+.header {
+    height: 45px;
+    line-height: 45px;
+    padding-left: 15px;
+    font-size: 14px;
+    color: rgb(144, 144, 144);
+    border-bottom: 1px solid rgba(151, 151, 151, .15);
+
+    span {
+        cursor: pointer;
+        padding: 0 15px;
+    }
+
+    span:nth-child(n+2) {
+        border-left: 1px solid rgba(144, 144, 144, .25);
+    }
+
+    .active {
+        color: #007fff;
+    }
+}
+
 // 文章
 .article {
     display: flex;
@@ -279,19 +360,27 @@ async function toComment() {
 
             >button {
 
+                min-width: 28px;
                 background-color: transparent;
                 margin-right: 15px;
                 color: rgb(134, 144, 156);
 
                 .el-icon,
-                .icon-dianzan {
+                .icon-dianzan,
+                .icon-dianzan_kuai {
                     // margin-left: 8px;
                     vertical-align: -1px;
                     margin-right: 3px;
                 }
 
-                .icon-dianzan {
+                .icon-dianzan,
+                .icon-dianzan_kuai {
                     vertical-align: 1px;
+                }
+
+                // 点赞(true的样式)
+                .icon-dianzan_kuai {
+                    color: #1e80ff;
                 }
 
 
@@ -717,5 +806,23 @@ async function toComment() {
         }
     }
 
+}
+
+// 回到顶部
+.totop {
+    width: 50px;
+    height: 50px;
+    position: fixed;
+    right: 30px;
+    bottom: 50px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    text-align: center;
+
+    a {
+        font-size: 26px;
+        color: #909090;
+        line-height: 50px;
+    }
 }
 </style>

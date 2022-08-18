@@ -36,4 +36,4 @@ export const theArticleImageUploadApi = (data: any) => request.post(`/users/file
 export const getOneArtivcle = (id: number) => request.get('/article/getonearticle', { params: { id } })
 
 // 递增api
-export const incrementApi = (increment_Info: { id: number, increment_item: 'like' | 'pageviews' }) => request.patch('/article/increment', increment_Info)
+export const addPageviewsApi = (article_id: number) => request.patch('/article/addpageviews', { id: article_id })

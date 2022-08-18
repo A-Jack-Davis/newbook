@@ -110,10 +110,9 @@ import { editUserDataApi } from '@/api/user';
 import { useUserStore } from '@/stores/user.js';
 import { successNotify, warningNotify } from '@/utils/notification';
 import { ArrowDown, ArrowUp, Edit, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
-import { objectPick } from '@vueuse/core';
 import { ElMessage, ElNotification, UploadProps } from 'element-plus';
 import { storeToRefs } from 'pinia';
-import { reactive, ref, computed } from 'vue';
+import { reactive, ref, } from 'vue';
 import ImgUpload from '@/components/ImgUpload/ImgUpload.vue'
 const userStore = useUserStore()
 const { userInfo } = storeToRefs(userStore)

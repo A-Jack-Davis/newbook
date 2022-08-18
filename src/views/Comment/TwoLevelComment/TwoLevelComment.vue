@@ -9,7 +9,7 @@
                 <!-- 评论者用户名 -->
                 <div class="name">
                     <span>{{ recomment.user_nickname }} </span>
-                    <span v-if="articleStore.articleInfo.user_id == recomment.user_id">
+                    <span v-if="articleStore.articleInfo.user.id == recomment.user_id">
                         <i class="iconfont icon-xinrenzhinan"></i>
                         <i>(作者)</i>
                         <i v-if="recomment.type == 3"> 回复 </i>

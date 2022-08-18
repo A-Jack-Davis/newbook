@@ -9,15 +9,17 @@ export const useArticleStore = defineStore('article', {
                 title: "",
                 content: "",
                 cover_url: "",
-                nickname: "",
-                user_id: 0,
                 createdAt: "",
                 introduction: "",
-                like: 0,
                 pageviews: 0,
                 comments: 0,
-                updatedAt: "",
-                user_avatar: ""
+                like: NaN,
+                user: {
+                    id: 0,
+                    nickname: "",
+                    avatar: ""
+                },
+                articleLikes: [NaN]
             }
         }
     },

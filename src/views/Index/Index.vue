@@ -1,11 +1,6 @@
 <template>
     <div class="container">
         <div class="left">
-            <div class="header">
-                <span class="active">推荐</span>
-                <span>最新</span>
-                <span>热榜</span>
-            </div>
             <AllArticle></AllArticle>
         </div>
         <div class="right">2</div>
@@ -56,7 +51,7 @@ import AllArticle from '@/views/AllArticle/AllArticle.vue';
     }
 }
 
-.active {
-    color: #007fff;
-}
+// .active {
+//     color: #007fff;
+// }
 </style>
