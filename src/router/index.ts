@@ -16,8 +16,39 @@ const routes: Array<RouteRecordRaw> = [
         children: [
             {
                 path: 'personalcenter',
-                name: "personalcenter",
-                component: () => import('@/views/PersonalCenter/PersonalCenter.vue')
+                component: () => import('@/views/PersonalCenter/PersonalCenter.vue'),
+                children: [
+                    {
+                        path: 'userarticle',
+                        name: 'userarticle',
+                        component: () => import('@/views/AllArticle/AllArticle.vue'),
+                    },
+                    {
+                        path: 'usercollect',
+                        name: "usercollect",
+                        component: () => import('@/views/AllArticle/AllArticle.vue'),
+                    },
+                    {
+                        path: 'userlike',
+                        name: "userlike",
+                        component: () => import('@/views/AllArticle/AllArticle.vue'),
+                    },
+                    {
+                        path: 'userfocuson',
+                        name: "userfocuson",
+                        component: () => import('@/views/PersonalCenter/DetailList/UserFocusOn/UserFocusOn.vue'),
+                    },
+                    {
+                        path: 'userfans',
+                        name: "userfans",
+                        component: () => import('@/views/PersonalCenter/DetailList/UserFocusOn/UserFocusOn.vue'),
+                    },
+                    {
+                        path: '',
+                        name: "",
+                        redirect: '/home/personalcenter/userarticle',
+                    }
+                ]
             },
             {
                 path: 'postarticle',
@@ -33,12 +64,22 @@ const routes: Array<RouteRecordRaw> = [
 
             },
             {
+                path: "focuson",
+                component: () => import("@/views/FocusOn/FocusOn.vue"),
+
+            },
+            {
                 path: 'article/:toComment?',
                 name: "article",
                 component: () => import("@/views/Article/Article.vue"),
+            },
+            {
+                path: "authors",
+                component: () => import("@/views/Authors/Authors.vue")
             }
         ]
-    }
+    },
+
 
 ]
 
@@ -47,7 +88,11 @@ const router = createRouter({
     routes,
     scrollBehavior(to, from, savedPosition) {
         // 始终滚动到顶部
-        return { top: 0 }
+        if (savedPosition) {
+            return savedPosition
+        } else {
+            return { left: 0, top: 0 }
+        }
     },
 })
 

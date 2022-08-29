@@ -1,23 +1,25 @@
 <template>
+    <!-- 选项导航 -->
     <div class="header">
         <span @click="order = 'recommended'" :class="{ active: order === 'recommended' }">推荐</span>
         <span @click="order = 'theLatest'" :class="{ active: order === 'theLatest' }">最新</span>
         <span @click="order = 'hotList'" :class="{ active: order === 'hotList' }">热榜</span>
     </div>
+
+    <!-- 文章列表 -->
     <div class="article" v-for="(article, index) in articleList" :key="article.id" @click="toAticle(article.id)">
+        <!-- 作者名  创建时间 -->
         <div class="info">
-            <span>{{ article.user.nickname }}</span>
-            <span>{{ timeAgo(article.createdAt) }}</span>
-            <!-- <span>Vue.js</span> -->
+            <span class="nickname" @click.stop="toOtherUser(article.user.id)">{{  article.user.nickname  }}</span>
+            <span>{{  timeAgo(article.createdAt)  }}</span>
         </div>
+        <!-- 文章相关内容 -->
         <div class="content">
             <div class="l">
                 <!-- 标题 -->
-                <h4 class="title">{{ article.title }}</h4>
+                <h4 class="title">{{  article.title  }}</h4>
                 <!-- 简介 -->
-                <p>
-                    {{ article.introduction ? article.introduction : _toChString(article.content) }}
-                </p>
+                <p> {{  article.introduction ? article.introduction : _toChString(article.content)  }} </p>
                 <!-- 文章访问信息 -->
                 <div class="floot">
                     <!-- 浏览量 -->
@@ -25,7 +27,7 @@
                         <el-icon>
                             <View />
                         </el-icon>
-                        <i>{{ article.pageviews }}</i>
+                        <i>{{  article.pageviews  }}</i>
                     </button>
                     <!-- 点赞 -->
                     <button @click.stop="add_of_delete_like(article.id, index)">
@@ -33,21 +35,38 @@
                             'icon-dianzan': !article.articleLikes.includes(userStore.userInfo.id),
                             'icon-dianzan_kuai': article.articleLikes.includes(userStore.userInfo.id)
                         }"> </i>
-                        <i>{{ article.like }}</i>
+                        <i>{{  article.like  }}</i>
                     </button>
                     <!-- 去评论区 -->
                     <button @click="toComment">
                         <el-icon>
                             <ChatLineRound />
                         </el-icon>
-                        {{ article.comments }}
+                        {{  article.comments  }}
                     </button>
+                    <!-- 编辑或删除 -->
+                    <el-dropdown v-if="route.path == '/home/personalcenter/userarticle'" trigger="click"
+                        @command="handleCommand">
+                        <span class="iconfont icon-qita" @click.stop=""></span>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item :command="{ article_id: article.id, command: 'editor' }">编辑
+                                </el-dropdown-item>
+                                <el-dropdown-item :command="{ article_id: article.id, command: 'delete' }">删除
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
                 </div>
             </div>
             <!-- 封面 -->
             <img :src="BASEURL + article.cover_url" alt="" v-if="article.cover_url">
         </div>
     </div>
+
+    <!-- 没有文章显示空 -->
+    <el-empty v-if="articleList.length === 0" description="空" />
+
     <!-- 加载动画 -->
     <div class="loading" v-show="loading">
         <div class="loader">
@@ -58,45 +77,43 @@
             <div class="dot"></div>
         </div>
     </div>
+
     <!-- 没有更多 -->
     <div class="empty" v-if="emptyShow">
-        <div class="loader">
-            <div class="side"></div>
-            <div class="side"></div>
-            <div class="side"></div>
-            <div class="side"></div>
-            <div class="side"></div>
-            <div class="side"></div>
-            <div class="side"></div>
-            <div class="side"></div>
-        </div>
-        <img src="@/assets/imgs/empty.png" alt="">
+        {{  route.path === '/home/index' ? '我也是有底线哦...' : ' '  }}
     </div>
+
     <!--回到顶部 -->
-    <div class="totop" v-show="toTop">
-        <a href="javascript:window.scrollTo(0,0)" class="iconfont icon-18huidaodingbu"></a>
-    </div>
+    <el-backtop :bottom="80">
+        <i class="iconfont icon-18huidaodingbu"></i>
+    </el-backtop>
 </template>
     
 <script setup lang='ts'>
 import timeAgo from '@/utils/timeAgo'
 import { BASEURL } from "@/const/VARIABLE"
-import { getAllArticleApi, addPageviewsApi } from '@/api/article';
+import { getAllArticleApi, addPageviewsApi, getUserArticleApi, getCollectArticleListApi, getLikeArticleListApi, getFovusOnArticleListApi, getArticlebySearchApi, deleteArticleApi, changeLike } from '@/api/article';
 import { useArticleStore } from '@/stores/article';
 import { ChatLineRound, View, } from '@element-plus/icons-vue';
 import { onMounted, reactive, ref, watch } from 'vue';
-import { onBeforeRouteLeave, useRouter } from 'vue-router';
-import { changeLike } from '@/api/articleLike';
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
-const aticleStore = useArticleStore()
+import { storeToRefs } from 'pinia';
+import { successNotify, warningNotify } from '@/utils/notification';
+import { useUpComponentsStore } from '@/stores/upComponents';
+const articleStore = useArticleStore()
 const router = useRouter()
 const userStore = useUserStore()
+const { userInfo } = storeToRefs(userStore)
+const route = useRoute()
+const up = useUpComponentsStore()
 
 onMounted(() => {
     // 挂载时获取文章列表
     getAticleList()
-    // 滚动到底，再加载的处理事件
+    // 滚动到底再加载的处理事件
     window.addEventListener('scroll', lazyLoading);
+
 })
 
 onBeforeRouteLeave((to, from, next) => {
@@ -112,8 +129,6 @@ const isRequesting = ref<boolean>(false)
 const loading = ref<boolean>(false)
 // 显示没有更多
 const emptyShow = ref<boolean>(false)
-// 是否显示 “回到顶部” 按钮
-const toTop = ref<boolean>(false)
 
 
 // 滚动到底，加载文章数据 ，动态判断是否显示“回到顶部”
@@ -123,21 +138,15 @@ async function lazyLoading() {
     let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
     let clientHeight = document.documentElement.clientHeight;
     let scrollHeight = document.documentElement.scrollHeight;
-    // 是否显示回到顶部
-    if (scrollTop > 800) {
-        toTop.value = true
-    } else {
-        toTop.value = false
-    }
     if (scrollTop + clientHeight >= scrollHeight - 200) { // 滚动到底部，逻辑代码
         //事件处理
-        if (isRequesting.value) return
-        isRequesting.value = true
         if (queryInfo.offset < count.value) {
+            if (isRequesting.value) return
+            isRequesting.value = true
             queryInfo.offset += queryInfo.limit
             loading.value = true
             setTimeout(async () => {
-                const res = await getAllArticleApi({ offset: queryInfo.offset, limit: queryInfo.limit, order: JSON.stringify(queryInfo.order) })
+                const res = await getAticleList()
                 count.value = res.count
                 if (res.code === 200) {
                     articleList.push(...res.data)
@@ -149,7 +158,6 @@ async function lazyLoading() {
                 }
             }, 400);
         }
-
     }
 }
 
@@ -163,6 +171,7 @@ let articleList: Array<any> | Array<{
     pageviews: number,
     comments: number
     createdAt: string,
+    like: number,
     user: Array<{
         id: number
         nickname: string,
@@ -170,45 +179,84 @@ let articleList: Array<any> | Array<{
     }>,
     articleLikes: Array<number>
 }> = reactive([])
+
 // 文章总数
 const count = ref(0)
+
 // 文章分页信息
 const queryInfo = reactive({
     offset: 0,
-    limit: 15,
-    order: [['like', 'DESC']],
+    limit: 7,
+    order: JSON.stringify([['like', 'DESC']]),
 })
+
 // 获取文章方式  推荐（热）/ 最新 / 热榜(热+新)
 const order = ref<'recommended' | "theLatest" | "hotList">('recommended')
 
 
 // 监控 -->获取文章方式
-watch(order, (newValue, oldValue) => {
-    queryInfo.order.length = 0
+watch(order, (newValue) => {
     if (newValue === 'recommended') {
-        queryInfo.order.push(['like', 'DESC'])
+        queryInfo.order = JSON.stringify([['like', 'DESC'], ['pageviews', 'DESC']])
     } else if (newValue === "theLatest") {
-        queryInfo.order.push(['createdAt', 'DESC'])
+        queryInfo.order = JSON.stringify([['createdAt', 'DESC']])
     } else if (newValue === "hotList") {
-        queryInfo.order.push(['like', 'DESC'], ['createdAt', 'DESC'])
+        queryInfo.order = JSON.stringify([['pageviews', 'DESC'], ['like', 'DESC'], ['createdAt', 'DESC']])
     }
-    articleList.length = 0
     queryInfo.offset = 0
-    // queryInfo.limit = 15
-    getAticleList()
+    getAticleList("clear")
 })
 
 // 获取文章列表
-async function getAticleList() {
+async function getAticleList(clear?: string) {
+    // 返回文章信息
+    let res
+    const path = route.path
+    const user_id = userStore.is_self ? userStore.userInfo.id : userStore.otherInfo.id
+    const querys = Object.assign({ user_id }, queryInfo)
     try {
-        const res = await getAllArticleApi({ offset: queryInfo.offset, limit: queryInfo.limit, order: JSON.stringify(queryInfo.order) })
-        if (res.code === 200) {
-            articleList.push(...res.data)
-            count.value = res.count
+        switch (path) {
+            case '/home/index':
+                // 搜索
+                if (route.query.search) {
+                    const search: string = route.query.search as string
+                    res = await getArticlebySearchApi(Object.assign({ search }, queryInfo))
+                    // 首页
+                } else {
+                    res = await getAllArticleApi(queryInfo)
+                }
+                break;
+            // 个人用户发布的文章
+            case '/home/personalcenter/userarticle':
+                res = await getUserArticleApi(querys)
+                break;
+            // 个人用户收藏的文章
+            case '/home/personalcenter/usercollect':
+                res = await getCollectArticleListApi(querys)
+                break;
+            // 个人用户点赞的文章
+            case '/home/personalcenter/userlike':
+                res = await getLikeArticleListApi(querys)
+                break;
+            // 个人用户关注所有用户的文章列表
+            case '/home/focuson':
+                res = await getFovusOnArticleListApi(querys)
+                break;
+            default:
+                break;
         }
     } catch (error) {
-        console.log('获取文章数据失败', error)
+        console.log('error', error)
     }
+
+    if (res.code == 200) {
+        if (clear == 'clear') {
+            articleList.length = 0
+        }
+        articleList.push.apply(articleList, res.data)
+        count.value = res.count
+    }
+    return res
 }
 
 // 没有introduction时对content的操作
@@ -218,7 +266,7 @@ const _toChString = (str: string) => str.replace(/([^\u4e00-\u9fa5 。，’‘�
 // 路由跳转-->article
 async function toAticle(id: number) {
     try {
-        await aticleStore.getArticleIno(id)
+        await articleStore.getArticleIno(id)
         router.push('/home/article')
         addPageviewsApi(id)
     } catch (error) {
@@ -250,6 +298,39 @@ async function add_of_delete_like(article_id: number, index: number) {
     }
 }
 
+// 去文章作者的个人中心页
+async function toOtherUser(user_id: number) {
+    if (user_id != userInfo.value.id) {
+        userStore.is_self = false
+        await userStore.getOtherInfo(user_id)
+    } else {
+        userStore.is_self = true
+    }
+    router.push(`/home/personalcenter`);
+}
+
+//编辑或删除 
+async function handleCommand(c: { article_id: number, command: string }) {
+    const { command, article_id } = c
+    switch (command) {
+        case 'editor':
+            await articleStore.getArticleIno(article_id)
+            router.push(`/home/postarticle?editor=${Date.now()}`)
+            break;
+        case 'delete':
+            const res = await deleteArticleApi(article_id)
+            if (res.code == 200) {
+                successNotify(res)
+                articleList.splice(articleList.findIndex(item => item.id == article_id), 1)
+                up.upUserStatistical++
+            } else {
+                warningNotify(res)
+            }
+            break;
+        default:
+            break;
+    }
+}
 
 </script>
     
@@ -278,6 +359,7 @@ async function add_of_delete_like(article_id: number, index: number) {
 
 // 文章
 .article {
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -293,6 +375,11 @@ async function add_of_delete_like(article_id: number, index: number) {
         font-size: 14px;
         color: rgb(144, 144, 144);
 
+        .nickname {
+            color: rgb(78, 89, 105);
+            cursor: pointer;
+        }
+
         span {
             // padding-left: 10px;
             padding-right: 10px;
@@ -305,7 +392,8 @@ async function add_of_delete_like(article_id: number, index: number) {
     }
 
     .content {
-        width: 680px;
+        // width: 680px;
+        width: 100%;
         display: flex;
         justify-content: space-between;
         border-bottom: 1px solid rgba(228, 230, 235, .8);
@@ -352,18 +440,19 @@ async function add_of_delete_like(article_id: number, index: number) {
         }
 
         .floot {
-            // width: 190px;
-            // display: flex;
             line-height: 20px;
             height: 20px;
             justify-content: space-between;
+            color: #4e5969;
 
             >button {
 
                 min-width: 28px;
                 background-color: transparent;
                 margin-right: 15px;
-                color: rgb(134, 144, 156);
+                // color: rgb(134, 144, 156);
+                color: #4e5969;
+
 
                 .el-icon,
                 .icon-dianzan,
@@ -385,6 +474,11 @@ async function add_of_delete_like(article_id: number, index: number) {
 
 
             }
+
+            .icon-qita {
+                font-size: 13px;
+                padding: 4px 8px;
+            }
         }
     }
 
@@ -392,315 +486,18 @@ async function add_of_delete_like(article_id: number, index: number) {
 
 // 没有更多
 .empty {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 70px;
-    margin: 20px 0;
-    font-family: "Lato";
-    color: #1d1d1d;
-
-    img {
-        width: 200px;
-    }
-
-    body {
-
-        margin: 0;
-        padding: 0;
-    }
-
-    .loader {
-        // position: absolute;
-        // left: 50%;
-        // top: 50%;
-        width: 48px;
-        height: 48px;
-        margin-right: 15px;
-
-        border-radius: 100%;
-        -webkit-animation-name: loader;
-        animation-name: loader;
-        -webkit-animation-iteration-count: infinite;
-        animation-iteration-count: infinite;
-        -webkit-animation-timing-function: linear;
-        animation-timing-function: linear;
-        -webkit-animation-duration: 4s;
-        animation-duration: 4s;
-    }
-
-    .loader .side {
-        display: block;
-        width: 6px;
-        height: 20px;
-        background-color: #046380;
-        margin: 2px;
-        position: absolute;
-        border-radius: 50%;
-        -webkit-animation-duration: 1.5s;
-        animation-duration: 1.5s;
-        -webkit-animation-iteration-count: infinite;
-        animation-iteration-count: infinite;
-        -webkit-animation-timing-function: ease;
-        animation-timing-function: ease;
-    }
-
-    .loader .side:nth-child(1),
-    .loader .side:nth-child(5) {
-        transform: rotate(0deg);
-        -webkit-animation-name: rotate0;
-        animation-name: rotate0;
-    }
-
-    .loader .side:nth-child(3),
-    .loader .side:nth-child(7) {
-        transform: rotate(90deg);
-        -webkit-animation-name: rotate90;
-        animation-name: rotate90;
-    }
-
-    .loader .side:nth-child(2),
-    .loader .side:nth-child(6) {
-        transform: rotate(45deg);
-        -webkit-animation-name: rotate45;
-        animation-name: rotate45;
-    }
-
-    .loader .side:nth-child(4),
-    .loader .side:nth-child(8) {
-        transform: rotate(135deg);
-        -webkit-animation-name: rotate135;
-        animation-name: rotate135;
-    }
-
-    .loader .side:nth-child(1) {
-        top: 24.14213562373095px;
-        left: 48px;
-        margin-left: -3px;
-        margin-top: -10px;
-        -webkit-animation-delay: 0;
-        animation-delay: 0;
-    }
-
-    .loader .side:nth-child(2) {
-        top: 41.21320343109277px;
-        left: 41.21320343109277px;
-        margin-left: -3px;
-        margin-top: -10px;
-        -webkit-animation-delay: 0;
-        animation-delay: 0;
-    }
-
-    .loader .side:nth-child(3) {
-        top: 48px;
-        left: 24.14213562373095px;
-        margin-left: -3px;
-        margin-top: -10px;
-        -webkit-animation-delay: 0;
-        animation-delay: 0;
-    }
-
-    .loader .side:nth-child(4) {
-        top: 41.21320343109277px;
-        left: 7.07106781636913px;
-        margin-left: -3px;
-        margin-top: -10px;
-        -webkit-animation-delay: 0;
-        animation-delay: 0;
-    }
-
-    .loader .side:nth-child(5) {
-        top: 24.14213562373095px;
-        left: 0px;
-        margin-left: -3px;
-        margin-top: -10px;
-        -webkit-animation-delay: 0;
-        animation-delay: 0;
-    }
-
-    .loader .side:nth-child(6) {
-        top: 7.07106781636913px;
-        left: 7.07106781636913px;
-        margin-left: -3px;
-        margin-top: -10px;
-        -webkit-animation-delay: 0;
-        animation-delay: 0;
-    }
-
-    .loader .side:nth-child(7) {
-        top: 0px;
-        left: 24.14213562373095px;
-        margin-left: -3px;
-        margin-top: -10px;
-        -webkit-animation-delay: 0;
-        animation-delay: 0;
-    }
-
-    .loader .side:nth-child(8) {
-        top: 7.07106781636913px;
-        left: 41.21320343109277px;
-        margin-left: -3px;
-        margin-top: -10px;
-        -webkit-animation-delay: 0;
-        animation-delay: 0;
-    }
-
-    @-webkit-keyframes rotate0 {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        60% {
-            transform: rotate(180deg);
-        }
-
-        100% {
-            transform: rotate(180deg);
-        }
-    }
-
-    @keyframes rotate0 {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        60% {
-            transform: rotate(180deg);
-        }
-
-        100% {
-            transform: rotate(180deg);
-        }
-    }
-
-    @-webkit-keyframes rotate90 {
-        0% {
-            transform: rotate(90deg);
-        }
-
-        60% {
-            transform: rotate(270deg);
-        }
-
-        100% {
-            transform: rotate(270deg);
-        }
-    }
-
-    @keyframes rotate90 {
-        0% {
-            transform: rotate(90deg);
-        }
-
-        60% {
-            transform: rotate(270deg);
-        }
-
-        100% {
-            transform: rotate(270deg);
-        }
-    }
-
-    @-webkit-keyframes rotate45 {
-        0% {
-            transform: rotate(45deg);
-        }
-
-        60% {
-            transform: rotate(225deg);
-        }
-
-        100% {
-            transform: rotate(225deg);
-        }
-    }
-
-    @keyframes rotate45 {
-        0% {
-            transform: rotate(45deg);
-        }
-
-        60% {
-            transform: rotate(225deg);
-        }
-
-        100% {
-            transform: rotate(225deg);
-        }
-    }
-
-    @-webkit-keyframes rotate135 {
-        0% {
-            transform: rotate(135deg);
-        }
-
-        60% {
-            transform: rotate(315deg);
-        }
-
-        100% {
-            transform: rotate(315deg);
-        }
-    }
-
-    @keyframes rotate135 {
-        0% {
-            transform: rotate(135deg);
-        }
-
-        60% {
-            transform: rotate(315deg);
-        }
-
-        100% {
-            transform: rotate(315deg);
-        }
-    }
-
-    @-webkit-keyframes loader {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-    @keyframes loader {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-
-
-
-
-    @keyframes rotate {
-        0% {
-            transform: translate(-50%, -50%) rotate(0);
-        }
-
-        100% {
-            transform: translate(-50%, -50%) rotate(360deg);
-        }
-    }
-
-
+    text-align: center;
+    height: 30px;
+    color: rgb(134, 144, 156);
+    font-size: 14px;
+    line-height: 30px;
 }
 
 // 加载动画
 .loading {
     width: 100%;
-    height: 100px;
-    margin: 20px 0;
+    height: 30px;
+    // margin: 20px 0;
     position: relative;
 
 
@@ -713,8 +510,8 @@ async function add_of_delete_like(article_id: number, index: number) {
     }
 
     .dot {
-        width: 24px;
-        height: 24px;
+        width: 10px;
+        height: 10px;
         background: #3ac;
         border-radius: 100%;
         display: inline-block;
@@ -809,20 +606,17 @@ async function add_of_delete_like(article_id: number, index: number) {
 }
 
 // 回到顶部
-.totop {
+.el-backtop {
     width: 50px;
     height: 50px;
-    position: fixed;
-    right: 30px;
-    bottom: 50px;
     border-radius: 50%;
     background-color: #ffffff;
     text-align: center;
+    line-height: 50px;
 
-    a {
-        font-size: 26px;
-        color: #909090;
-        line-height: 50px;
+    i {
+        font-size: 20px;
+        font-weight: 600;
     }
 }
 </style>

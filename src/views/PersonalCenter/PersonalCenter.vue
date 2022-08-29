@@ -3,8 +3,9 @@
         <div class="main" :class="{ showDataDown: showData, showDataUp: !showData }">
             <!-- 背景区域 -->
             <div class="bgimg" @mouseover="enterBgImg = true" @mouseout="enterBgImg = false">
-                <img :src="BASEURL + userInfo.bgcimg">
-                <el-upload class="bgcupload" :headers="{ Authorization: userStore.token }"
+                <img :src="BASEURL + userInfo.bgcimg" v-if="userStore.is_self">
+                <img :src="BASEURL + otherInfo.bgcimg" v-else>
+                <el-upload class="bgcupload" :headers="{ Authorization: userStore.token }" v-if="userStore.is_self"
                     :action="BASEURL + '/users/fileupload/bgcimg'" :on-success="handleAvatarSuccess"
                     :before-upload="beforeUpload">
                     <template #trigger>
@@ -17,7 +18,7 @@
             <!-- 头像大区域 -->
             <div class="cardinfo">
                 <div class="left">
-                    <ImgUpload v-bind="{
+                    <ImgUpload v-if="userStore.is_self" v-bind="{
                         action: BASEURL + '/users/fileupload/avatar',
                         type: 'avatar',
                         headers: { Authorization: userStore.token },
@@ -26,13 +27,16 @@
                             height: '120px',
                         }
                     }"></ImgUpload>
+                    <img :src="BASEURL + otherInfo.avatar" alt="" v-else class="other_avatar">
 
                     <div class="username">
-                        <h1>小酒馆</h1>
+                        <h1 v-if="userStore.is_self">{{  userInfo.nickname  }}</h1>
+                        <h1 v-else>{{  otherInfo.nickname  }}</h1>
                     </div>
                 </div>
-                <el-button @click="showData = showForm = true" type="primary" size="small" plain :icon="Edit">
-                    编辑个人资料
+                <el-button @click="showData = showForm = true" type="primary" size="small" plain
+                    v-if="userStore.is_self">
+                    <i class="iconfont icon-edit-role" style="margin-right: 8px;"></i>编辑个人资料
                 </el-button>
             </div>
 
@@ -43,32 +47,32 @@
                     <el-descriptions title="个人信息" :column="2">
                         <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="帐号:">
                             <el-input v-model="formInfo.user_name" disabled size="small" v-if="showForm"></el-input>
-                            <span v-else>{{ formInfo.user_name }}</span>
+                            <span v-else>{{  formInfo.user_name  }}</span>
                         </el-descriptions-item>
                         <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="手机号:">
                             <el-input v-model="formInfo.phoneNo" size="small" v-if="showForm"></el-input>
-                            <span v-else>{{ formInfo.phoneNo }}</span>
+                            <span v-else>{{  userStore.is_self ? formInfo.phoneNo : otherInfo.phoneNo  }}</span>
                         </el-descriptions-item>
                         <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="昵称:">
                             <el-input v-model="formInfo.nickname" size="small" v-if="showForm"></el-input>
-                            <span v-else>{{ formInfo.nickname }}</span>
+                            <span v-else>{{  userStore.is_self ? formInfo.nickname : otherInfo.nickname  }}</span>
                         </el-descriptions-item>
                         <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="地址:">
                             <el-input v-model="formInfo.address" class="ml10" size="small" v-if="showForm">
                             </el-input>
-                            <span v-else>{{ formInfo.address }}</span>
+                            <span v-else>{{  userStore.is_self ? formInfo.address : otherInfo.address  }}</span>
                         </el-descriptions-item>
                         <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="姓别:">
                             <el-radio-group class="radio" v-model="formInfo.sex" size="small" v-if='showForm'>
                                 <el-radio-button label="男"></el-radio-button>
                                 <el-radio-button label="女"></el-radio-button>
                             </el-radio-group>
-                            <span v-else>{{ formInfo.sex }}</span>
+                            <span v-else>{{  userStore.is_self ? formInfo.sex : otherInfo.sex  }}</span>
                         </el-descriptions-item>
                         <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="学校:">
                             <el-input v-model="formInfo.school" class="ml10" size="small" v-if="showForm">
                             </el-input>
-                            <span v-else>{{ formInfo.school }}</span>
+                            <span v-else>{{  userStore.is_self ? formInfo.school : otherInfo.school  }}</span>
                         </el-descriptions-item>
                     </el-descriptions>
 
@@ -77,16 +81,18 @@
                         <el-input class="jj" v-model="formInfo.Introduction" v-if='showForm' clearable
                             :autosize="{ minRows: 4, maxRows: 4 }" type="textarea" resize="none" show-word-limit
                             maxlength="150"></el-input>
-                        <p v-else>{{ formInfo.Introduction }}</p>
+                        <p v-else>{{  userStore.is_self ? formInfo.Introduction : otherInfo.Introduction  }}</p>
                     </div>
                 </el-form>
             </div>
 
             <el-button text bg :icon="showData ? ArrowUp : ArrowDown" class="showBut"
                 @click="showData = !showData; showForm = false">
-                查看详细资料</el-button>
+                查看详细资料
+            </el-button>
 
-            <el-button-group class="buttongroup" v-show="showData">
+            <!-- 取消和修改按钮 -->
+            <el-button-group class="buttongroup" v-show="showData" v-if="userStore.is_self">
                 <el-button type="primary" plain size="small" :icon="ArrowLeft" @click="cancelChange">取消</el-button>
                 <el-button type="primary" plain size="small" @click="submitChanges">
                     修改<el-icon class="el-icon--right">
@@ -97,15 +103,20 @@
         </div>
     </el-card>
 
+
+    <!-- 个人数据相关（文章，用户相关） -->
     <div class="userCart">
-
-
+        <div class="left">
+            <DetailList :key="up.upDetailList"></DetailList>
+        </div>
+        <el-affix :offset="80">
+            <UserStatistical :key="up.upUserStatistical"></UserStatistical>
+        </el-affix>
     </div>
 </template>
     
 <script setup lang='ts'>
 import { BASEURL } from "@/const/VARIABLE"
-
 import { editUserDataApi } from '@/api/user';
 import { useUserStore } from '@/stores/user.js';
 import { successNotify, warningNotify } from '@/utils/notification';
@@ -114,17 +125,18 @@ import { ElMessage, ElNotification, UploadProps } from 'element-plus';
 import { storeToRefs } from 'pinia';
 import { reactive, ref, } from 'vue';
 import ImgUpload from '@/components/ImgUpload/ImgUpload.vue'
+import DetailList from './DetailList/DetailList.vue'
+import { onBeforeRouteLeave } from "vue-router";
+import UserStatistical from "./UserStatistical/UserStatistical.vue";
+import { useUpComponentsStore } from "@/stores/upComponents";
 const userStore = useUserStore()
-const { userInfo } = storeToRefs(userStore)
-
+const { userInfo, otherInfo } = storeToRefs(userStore)
+const up = useUpComponentsStore()
 
 // 是否显示编辑封面图片按钮
 const enterBgImg = ref<boolean>(false)
 
-/**
- * @description: 上传成功，发送请求获取用户最新数据 
- * @return {object}
- */
+// 封面上传成功，发送请求获取用户最新数据 
 const handleAvatarSuccess: UploadProps['onSuccess'] = async (
     response,
     uploadFile
@@ -137,10 +149,7 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = async (
     await userStore.getUserInfo();
 }
 
-/**
- * @description: 上传前判断文件类型
- * @return {object}
- */
+// 上传前判断文件类型
 const beforeUpload: UploadProps['beforeUpload'] = (file: any) => {
     const fileSuffix = file.name.substring(file.name.lastIndexOf(".") + 1);
 
@@ -153,9 +162,7 @@ const beforeUpload: UploadProps['beforeUpload'] = (file: any) => {
         })
         return false;
     }
-
     const isLt2M = file.size / 1024 / 1024 < 5;
-
     if (!isLt2M) {
         ElMessage({
             showClose: true,
@@ -171,7 +178,6 @@ const showData = ref<boolean>(false)
 
 // 修改数据
 const showForm = ref<boolean>(false)
-
 
 // 修改--表单数据
 const formInfo = reactive({
@@ -209,6 +215,15 @@ async function submitChanges() {
         console.log('修改用户数据失败', error)
     }
 }
+
+onBeforeRouteLeave((to, from, next) => {
+    userStore.is_self = true
+    userStore.getOtherInfo(userInfo.value.id)
+    next()
+})
+
+
+
 
 </script>
     
@@ -268,6 +283,11 @@ async function submitChanges() {
                 align-items: flex-end;
                 padding-left: 20px;
                 padding-bottom: 20px;
+
+                .other_avatar {
+                    width: 120px;
+                    height: 120px;
+                }
 
                 .username {
                     margin-left: 30px;
@@ -356,18 +376,22 @@ async function submitChanges() {
     }
 }
 
+
+
+
 .userCart {
+    display: flex;
+    justify-content: space-between;
     max-width: 980px;
     margin: 10px auto;
-    height: 600px;
-    overflow: hidden;
-    background-color: #222222;
 
-    img {
-        float: left;
-        width: 50%;
-        height: auto;
+    .left {
+        width: 670px;
     }
+
+
+
+
 }
 
 .showDataDown {

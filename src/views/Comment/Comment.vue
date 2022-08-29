@@ -1,7 +1,9 @@
 <template>
     <div class="commentbox">
+        <!-- 共n条评论 -->
         <div class="conut" :key="commentsStore.commentList.length">
-            共 <el-tag round> {{ commentsStore.commentList.length }} </el-tag> 条评论 <i class="iconfont icon-huo"></i>
+            共 <el-tag round> {{  commentsStore.commentList.length  }} </el-tag> 条评论
+            <i class="iconfont icon-huo"></i>
         </div>
         <!-- 遍历评论 -->
         <div class="main" v-for="comment  in commentsStore.commentList" :key="comment.id">
@@ -12,7 +14,7 @@
 </template>
     
 <script setup lang='ts'>
-import { onMounted, computed } from 'vue';
+import { onMounted } from 'vue';
 import { useCommentsStore } from '@/stores/comment';
 import { useArticleStore } from '@/stores/article';
 import OneLevelComment from './OneLevelComment/OneLevelComment.vue';

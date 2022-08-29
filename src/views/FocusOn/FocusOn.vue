@@ -1,21 +1,20 @@
 <template>
     <div class="container">
-        <!-- 文章列表 -->
         <div class="left">
-            <AllArticle :key="$route.query.search + ''"></AllArticle>
+            <AllArticle></AllArticle>
         </div>
-        <!-- 推荐文章 和 作者榜单 -->
         <el-affix :offset="70">
             <RecommendTheArticle :limit="5"></RecommendTheArticle>
             <AuthorList style="margin-top: 20px;"></AuthorList>
         </el-affix>
+
     </div>
+
 </template>
     
 <script setup lang='ts'>
-import AllArticle from '@/views/AllArticle/AllArticle.vue';
-import AuthorList from '@/components/AuthorList/AuthorList.vue';
-import RecommendTheArticle from "@/components/RecommendTheArticle/RecommendTheArticle.vue"
+import AllArticle from '../AllArticle/AllArticle.vue';
+
 </script>
     
 <style lang='less' scoped>
@@ -58,12 +57,5 @@ import RecommendTheArticle from "@/components/RecommendTheArticle/RecommendTheAr
             background-color: #ffffff;
         }
     }
-
-
-
 }
-
-// .active {
-//     color: #007fff;
-// }
 </style>

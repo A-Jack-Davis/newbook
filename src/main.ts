@@ -11,7 +11,7 @@ import "@/assets/iconfont/iconfont"
 import "@/assets/iconfont/iconfont.css"
 
 //  无限滚动
-import InfiniteScroll from "element-plus";
+// import InfiniteScroll from "element-plus";
 
 // 引入发v-md-editor
 import VueMarkdownEditor from '@kangc/v-md-editor';
@@ -26,6 +26,7 @@ import createLineNumbertPlugin from '@kangc/v-md-editor/lib/plugins/line-number/
 
 import Prism from 'prismjs';
 
+
 VueMarkdownEditor.use(vuepressTheme, {
     Prism,
 });
@@ -37,5 +38,6 @@ VMdPreview.use(vuepressTheme, {
 VueMarkdownEditor.use(createLineNumbertPlugin());
 VMdPreview.use(createLineNumbertPlugin());
 
-const app = createApp(App).use(stroe).use(VueMarkdownEditor).use(VMdPreview).use(InfiniteScroll).use(router)
+const app = createApp(App).use(stroe).use(VueMarkdownEditor).use(VMdPreview).use(router)
+
 app.mount('#app')

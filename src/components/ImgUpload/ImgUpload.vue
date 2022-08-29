@@ -3,19 +3,25 @@
         :style="props.style" :before-upload="beforeUpload" :headers="props.headers">
         <template #trigger>
 
+            <!-- 头像上传 -->
             <el-card v-if="props.type === 'avatar'" class="container_avatar" @mouseenter="uploadIconShow = true"
                 @mouseleave="uploadIconShow = false" :body-style="[{ padding: '0' }, props.style]">
                 <img :src="BASEURL + userStore.userInfo.avatar" alt="">
-                <el-icon :class="{ visibility: uploadIconShow }">
+                <el-icon v-show="uploadIconShow">
                     <CameraFilled class="icon" />
                     <span>修改头像</span>
                 </el-icon>
             </el-card>
 
-
-            <el-card v-if="props.type === 'img'" class="container_img" :body-style="[{ padding: '0' }, props.style]">
+            <!-- 普通 图片上传 -->
+            <el-card v-if="props.type === 'img'" class="container_img" :body-style="[{ padding: '0' }, props.style]"
+                @mouseenter="uploadIconShow = true" @mouseleave="uploadIconShow = false">
                 <img v-if="imageUrl" :src="imageUrl" />
+                <img v-if="$route.query.editor" :src="BASEURL + articleStore.articleInfo.cover_url" alt="">
                 <el-icon v-else>
+                    <Plus class="icon" />
+                </el-icon>
+                <el-icon v-show="uploadIconShow">
                     <Plus class="icon" />
                 </el-icon>
             </el-card>
@@ -30,8 +36,10 @@ import { useUserStore } from '@/stores/user.js';
 import { CameraFilled, Plus } from '@element-plus/icons-vue';
 import { ref } from 'vue';
 import { ElMessage, ElNotification, UploadProps } from 'element-plus';
+import { useArticleStore } from "@/stores/article";
 
 const userStore = useUserStore()
+const articleStore = useArticleStore()
 const emit = defineEmits(['getRes'])
 
 // 控制修改头像按钮是否显示
@@ -148,8 +156,7 @@ const beforeUpload: UploadProps['beforeUpload'] = (file: any) => {
         font-size: 28px;
         line-height: 1em;
         color: #ffffff;
-        visibility: hidden;
-        z-index: 99;
+        z-index: 9;
 
 
         span {
@@ -157,20 +164,14 @@ const beforeUpload: UploadProps['beforeUpload'] = (file: any) => {
         }
     }
 
-    .visibility {
-        visibility: visible;
-    }
-
 }
 
 .container_img {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    // width: 150px;
-    // height: 100px;
+    position: relative;
 
     img {
+        position: absolute;
+        // z-index: 1;
         width: 100%;
         height: 100%;
     }
@@ -186,7 +187,10 @@ const beforeUpload: UploadProps['beforeUpload'] = (file: any) => {
         font-size: 28px;
         line-height: 1em;
         color: #898989;
-        z-index: 99;
+        position: absolute;
+        // z-index: 99999;
+        background-color: rgba(47, 46, 46, 0.415);
+        color: #ffffff;
     }
 }
 </style>

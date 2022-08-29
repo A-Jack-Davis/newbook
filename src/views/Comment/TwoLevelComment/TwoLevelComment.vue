@@ -5,39 +5,39 @@
 
         <div class="body">
             <div class="hoverbox" @mouseenter="delete_but_show = true" @mouseleave="delete_but_show = false">
-
                 <!-- 评论者用户名 -->
                 <div class="name">
-                    <span>{{ recomment.user_nickname }} </span>
+                    <span>{{  recomment.user_nickname  }} </span>
                     <span v-if="articleStore.articleInfo.user.id == recomment.user_id">
                         <i class="iconfont icon-xinrenzhinan"></i>
                         <i>(作者)</i>
                         <i v-if="recomment.type == 3"> 回复 </i>
-                        <i>{{ recomment.f_nickname }}</i>
+                        <i>{{  recomment.f_nickname  }}</i>
                     </span>
                     <!-- 发布时间 -->
-                    <div class="timeago">{{ timeAgo(recomment.createdAt) }}</div>
+                    <div class="timeago">{{  timeAgo(recomment.createdAt)  }}</div>
                 </div>
 
                 <!-- 评论内容 -->
-                <div class="content"> {{ recomment.re_content }}</div>
+                <div class="content"> {{  recomment.re_content  }}</div>
                 <!-- 引用一级评论 -->
                 <div class="f_re_content" v-if="recomment.type == 3">
-                    “{{ recomment.f_re_content }}
+                    “{{  recomment.f_re_content  }}
                 </div>
 
                 <!-- 点赞 回复 删除 -->
                 <div class="function">
                     <!-- 点赞 -->
                     <button class="iconfont icon-dianzan" @click="addLike(recomment.id)">
-                        &#8197; {{ recomment.like > 0 ? recomment.like : '点赞' }}
+                        &#8197; {{  recomment.like > 0 ? recomment.like : '点赞'  }}
                     </button>
                     <!-- 回复 -->
                     <i class="iconfont icon-pinglunxiao" @click="replyComment" :class="{ activeStyle: textarea_show }">
-                        &#8197;{{ textarea_show ? '取消回复' : "回复" }}
+                        &#8197;{{  textarea_show ? '取消回复' : "回复"  }}
                     </i>
                     <!-- 删除 -->
-                    <i class="delete" v-show="delete_but_show" @click="deleteComment(recomment.id)">删除</i>
+                    <i class="delete" v-show="delete_but_show && userStore.userInfo.id == recomment.user_id"
+                        @click="deleteComment(recomment.id)">删除</i>
                 </div>
             </div>
 
@@ -95,7 +95,7 @@ function textareaOnBlur() {
 // 删除评论
 async function deleteComment(id: number) {
     try {
-        const res = await deleteCommentApi(id, 2)
+        const res = await deleteCommentApi(2, id)
         if (res.code == 200) {
             successNotify(res)
             commentsStore.getCommentlist(articleStore.articleInfo.id)

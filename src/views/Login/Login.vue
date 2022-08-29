@@ -29,7 +29,7 @@
             <!-- 翻转面（后） -->
             <div class="card-contents card-back">
                 <div class="card-depth">
-                    <h2>{{ register_or_password_flag ? "注册" : "忘记密码" }}</h2>
+                    <h2>{{  register_or_password_flag ? "注册" : "忘记密码"  }}</h2>
                     <hr />
                     <el-form ref="registerAmdChangePasswordFormRef" :model="form" status-icon :rules="rules">
                         <el-form-item prop="user_name">
@@ -53,23 +53,18 @@
                                 register_or_password_flag ? 'forgotPassword' : 'noRegister'
                             )
                         ">
-                            {{ register_or_password_flag ? "忘记密码?" : "还没注册?" }}
+                            {{  register_or_password_flag ? "忘记密码?" : "还没注册?"  }}
                         </span>
                     </div>
                     <button
                         @click="register_or_password_flag ? registerMethod(registerAmdChangePasswordFormRef as FormInstance) : changePasswordMethod(registerAmdChangePasswordFormRef as FormInstance)">
-                        {{ register_or_password_flag ? "注册" : "忘记密码" }}
+                        {{  register_or_password_flag ? "注册" : "忘记密码"  }}
                     </button>
                 </div>
             </div>
         </div>
     </div>
 </template>
-<!-- <script  lang="ts">
-export default defineComponent({
-
-})
-</script> -->
 <script setup lang="ts">
 import { UserFilled, Key, Phone } from "@element-plus/icons-vue";
 import { FormInstance, FormRules } from "element-plus";
@@ -88,9 +83,7 @@ const toggle = ref<boolean>(false); //false前--true后
 // 标记注册或改密
 const register_or_password = ref<"register" | "changePassword">("register");
 // 判断当前是注册or改密
-const register_or_password_flag = computed(
-    () => register_or_password.value === "register"
-);
+const register_or_password_flag = computed(() => register_or_password.value === "register");
 //所有表单数据
 let form = reactive({
     user_name: "admin",
@@ -152,7 +145,6 @@ const flipAmdChangeBack = (
     form.phoneNo = "";
     switch (flag) {
         case "noRegister":
-            // toggle.value = !toggle.value
             if (toggle.value === false) {
                 //登录页-->注册页
                 toggle.value = true;
@@ -232,7 +224,7 @@ const registerMethod = async (formEl: FormInstance) => {
     if (flag) {
         const { user_name, password, confirmPassword } = form;
         try {
-            const res = await registerApi({ user_name, password, confirmPassword });
+            const res = await registerApi({ user_name, password });
             if (res.code === 200) {
                 successNotify(res)
                 flipAmdChangeBack('havePassword')
@@ -282,23 +274,26 @@ const changePasswordMethod = async (formEl: FormInstance) => {
     height: 100%;
     perspective: 2000px; //定义 3D 元素距视图的距离
     background-image: url("@/assets/imgs/bagimg.jpg"); //https://api.dujin.org/bing/1920.php
-    // background-image: url(https://api.dujin.org/bing/1920.php);
-
-    h2,
-    p {
-        // color: #191111;
-        text-shadow: 1px 2px 2px rgba(0, 0, 0, 0.2);
-    }
+    background-image: url(https://api.dujin.org/bing/1920.php);
 
     >.card {
+
+        h2,
+        p {
+            // color: #191111;
+            text-shadow: 1px 2px 2px rgba(0, 0, 0, 0.2);
+        }
+
         margin: 0 auto;
         height: 420px;
         width: 500px;
         max-width: 80%;
         position: relative;
         border-radius: 25px;
-        transition: all 1s ease;
+        transition: all 1.2s ease;
+
         transform-style: preserve-3d; //让转换的子元素保留3D转换
+
         box-shadow: 1px 3px 3px rgba(0, 0, 0, 0.2);
 
         >.card-contents {
@@ -309,12 +304,15 @@ const changePasswordMethod = async (formEl: FormInstance) => {
             position: absolute;
             top: 0;
             left: 0;
+
+
             backface-visibility: hidden; //隐藏旋转 div 元素的背面
 
             >.card-depth {
                 width: 100%;
                 height: 100%;
-                transform: translateZ(100px) scale(0.98); //设置卡片深度
+                transform: translateZ(120px) scale(0.98); //设置卡片深度
+
                 perspective: inherit; //设置元素被查看位置的视图：
             }
         }
@@ -322,12 +320,14 @@ const changePasswordMethod = async (formEl: FormInstance) => {
         .card-front {
             background: linear-gradient(to top left, #705f58, #00223e);
             // background: linear-gradient(to top left, #ffa17f, #00223e);
+
             transform-style: preserve-3d; //让转换的子元素保留3D转换
         }
 
         .card-back {
             transform: rotateY(180deg);
             background: linear-gradient(to top left, #3a6186, #89253e);
+
             transform-style: preserve-3d; //让转换的子元素保留3D转换
         }
     }

@@ -1,50 +1,66 @@
 import request from '@/api/request'
 
-/** 
- * @description: 注册
- * @param {object} registerInfo {user_name, password}
- * @return {object} { id , user_name }
- */
-export const registerApi = (registerInfo: any) => request.post("/users/register", registerInfo)
+// 注册
+export const registerApi = (registerInfo: {
+    user_name: string,
+    password: string
+}) => request.post("/users/register", registerInfo)
 
+// 登录 
+export const loginApi = (loginInfo: {
+    user_name: string,
+    password: string
+}) => request.post("/users/login", loginInfo)
 
-/** 
- * @description: 登录 
- * @param {object} loginInfo {user_name, password}
- * @return {object} { data ,token }
- */
-export const loginApi = (loginInfo: any) => request.post("/users/login", loginInfo)
+// 未登录状态修改密码
+export const notLoginPasswordChangeApi = (changeThePasswordInfo: {
+    user_name: string,
+    password: string,
+    phoneNo: string
+}) => request.patch("/users/passwordchange", changeThePasswordInfo)
 
+// 已登录状态修改密码
+export const loginChangPasswordApi = (changInfo: {
+    oldPassword: string,
+    password: string,
+    confirmPassword: string
+}) => request.patch("/users/changepassword", changInfo)
 
-/** 
- * @description: 未登录状态修改密码
- * @param {object} changeThePasswordInfo { user_name, password, phoneNo}
- * @return {object} { id , user_name }
- */
-export const notLoginPasswordChangeApi = (changeThePasswordInfo: any) => request.patch("/users/passwordchange", changeThePasswordInfo)
-
-
-/** 
- * @description: 已登录状态修改密码
- * @param {object} changInfo { oldPassword, password, confirmPassword}
- * @return {undefined}  
- */
-export const loginChangPasswordApi = (changInfo: any) => request.patch("/users/changepassword", changInfo)
-
-
-/** 
- * @description: 获取用户信息
- * @param {object}  
- * @return {object} {用户详细数据}
- */
+// 获取用户信息
 export const getUserInfoApi = () => request.post("/users/getuserinfo")
 
+// 根据id获取用户数据 
+export const getUserInfoById = (id: number) => request.get('/users/getuserinfobyid', { params: { id } })
 
-/** 
- * @description: 修改用户信息
- * @param {object} updataObj  {whereOpt:条件, newUser:待更新数据}
- * @return {undefined}
- */
-export const editUserDataApi = (updataObj: any) => request.put('/users/upuserdata', updataObj)
+// 修改用户信息
+export const editUserDataApi = (updataObj:
+    {
+        whereOpt: { id: number },
+        newUser: {
+            user_name: string,
+            nickname: string,
+            sex: string,
+            phoneNo: string,
+            address: string,
+            school: string,
+            Introduction: string
+        }
+    }) => request.put('/users/upuserdata', updataObj)
+
+// 获取作者榜单
+export const getAuthorListApi = (paging: {
+    offset: number,
+    limit: number,
+}) => request.get('/users/getauthors', { params: paging })
+
+// 关注或取消关注
+export const attentionApi = (user_id: number, follower_id: number) => request.post(`/relation/follower`, { user_id, follower_id })
+
+// 获取关注的作者列表
+export const getFocusUserListApi = (user_id: number) => request.get(`/relation/getwatchlist`, { params: { user_id } })
+
+// 粉丝列表
+export const getFansListApi = (follower_id: number, detailedType: number) => request.get(`/relation/getfanslist/${detailedType}`, { params: { follower_id } })
+
 
 

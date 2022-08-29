@@ -177,3 +177,7 @@ body {
 /* .fade-leave-to {
   display: none;
 } */
+html,
+body {
+    margin-left: calc(100vw - 100%);
+}

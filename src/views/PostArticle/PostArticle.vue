@@ -1,16 +1,16 @@
 <template>
     <!-- 标题 -->
     <div class="header">
-        <input type="text" placeholder="输入文章标题..." v-model="articleInfo.title">
+        <input type="text" placeholder="输入文章标题..." v-model="articleData.title">
         <div class="operation">
             <el-button type="info" size="default" @click="cancel">取消</el-button>
-            <el-button type="primary" size="default" @click="show_release_box = true">发布</el-button>
+            <el-button type="primary" size="default" @click="show_release_box = true"> {{  isEditor ? '更新并发布' : "发布"  }}
+            </el-button>
             <el-avatar :src="BASEURL + userStore.userInfo.avatar" @click="router.push('/home/personalcenter')" />
         </div>
-
     </div>
     <!-- v-md-editor -->
-    <v-md-editor v-model="articleInfo.content" :height="height" class="editor" :disabled-menus="[]"
+    <v-md-editor v-model="articleData.content" :height="height" class="editor" :disabled-menus="[]"
         @upload-image="handleUploadImage"></v-md-editor>
 
     <!-- 发布盒子 -->
@@ -20,7 +20,8 @@
             <div class="cover">
                 <span>文章封面:</span>
                 <ImgUpload class="uplod_img" @get-res="setCoverUrl" v-bind="{
-                    action: BASEURL + '/users/fileupload/articleimg',
+                    action: isEditor ? `${BASEURL}/users/fileupload/editorarticleimg?article_id=${articleInfo.id}` : `${BASEURL}/users/fileupload/articleimg`,
+                    // `/users/fileupload/editorarticleimg?article_id=${article_id}`
                     type: 'img',
                     headers: { Authorization: userStore.token },
                     style: {
@@ -31,13 +32,13 @@
             </div>
             <div class="introduction">
                 <span>编辑摘要:</span>
-                <el-input v-model="articleInfo.introduction" clearable :autosize="{ minRows: 4, maxRows: 4 }"
+                <el-input v-model="articleData.introduction" clearable :autosize="{ minRows: 4, maxRows: 4 }"
                     type="textarea" resize="none" show-word-limit maxlength="100"></el-input>
             </div>
         </div>
         <div class="buts">
             <el-button type="info" size="default" @click="show_release_box = false">取消</el-button>
-            <el-button type="primary" size="default" @click="release">发布</el-button>
+            <el-button type="primary" size="default" @click="release"> {{  isEditor ? '更新并发布' : "发布"  }}</el-button>
         </div>
         <div class="blue">
         </div>
@@ -46,35 +47,53 @@
     
 <script setup lang='ts'>
 import { BASEURL } from "@/const/VARIABLE"
-
 import { useUserStore } from '@/stores/user';
-import { reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { theArticleImageUploadApi, addArticleApi } from "@/api/article"
+import { onMounted, reactive, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { theArticleImageUploadApi, addArticleApi, theChangeArticleImageUploadApi, editorArticleApi } from "@/api/article"
 import { storeToRefs } from 'pinia';
 import { successNotify, warningNotify } from '@/utils/notification';
 import ImgUpload from '@/components/ImgUpload/ImgUpload.vue';
+import { useArticleStore } from "@/stores/article";
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const { userInfo } = storeToRefs(userStore)
-
-
+const articleStore = useArticleStore()
+const { articleInfo } = storeToRefs(articleStore)
 // 文章信息
-const articleInfo = reactive({
+const articleData = reactive({
     user_id: userInfo.value.id,
-    cover_url: "/admin/articleimg/10/articleimg20220810103347.png",
-    title: "【万字】透过分析webpack面试题，构建webpack5,x知识体系",
-    content: "# 基础\n\n## 基础使用\n\n**`Webpack` 是一个静态资源打包工具。**\n\n它会以**一个**或**多个**文件作为打包的入口，将我们整个项目所有文件编译组合成**一个**或**多个**文件输出出去。\n\n输出的文件就是编译好的文件，就可以在浏览器段运行了。我们将 `Webpack` 输出的文件叫做 `bundle`。\n\n### 功能介绍\n\nWebpack 本身功能是有限的:\n\n- 开发模式：仅能编译 JS 中的 `ES Module` 语法\n- 生产模式：能编译 JS 中的 `ES Module` 语法，还能**压缩 JS**代码\n\n### 开始使用\n\n`1.资源目录`\n\n```js\nwebpack_code # 项目根目录（所有指令必须在这个目录运行）\n    └── src # 项目源码目录\n        ├── js # js文件目录\n        │   ├── count.js\n        │   └── sum.js\n        └── main.js # 项目主文件\n```\n\n```js\nfunction debounce(callback, delay) {\n\tlet timer = null;\n\treturn function () {\n\t\tclearTimeout(timer);\n\t\ttimer = setTimeout(() => {\n\t\t\tcallback.bind(this)();\n\t\t}, delay);\n\t}\n}\n```\n\n## 思路\n\n1. 先创建一个临时文件夹，存储编写时的图片\n2. 每次编写前清空临时文件夹\n3. 发布时：修改text再请求\n4. 将临时文件夹下文件移动到：**文章文件夹**\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
-    introduction: 'DEA是最常用的开发工具，很多程序员都想把它打造成一站式开发平台，于是安装了各种各样的插件。最近发现了一款IDEA插件RestfulFastRequest，细节做的真心不错，说它是IDEA版的Postman也不为过，推荐给大家！'
+    cover_url: "",
+    title: "",
+    content: "",
+    introduction: ""
 })
 
+onMounted(() => {
+    if (route.query.editor) {
+        isEditor.value = true
+        articleData.title = articleInfo.value.title
+        articleData.content = articleInfo.value.content
+        articleData.introduction = articleInfo.value.introduction
+        articleData.cover_url = articleInfo.value.cover_url
+    }
+})
+
+// 修改状态？
+const isEditor = ref(false)
 
 // markdown编辑器图片上传到服务器
 async function handleUploadImage(event: any, insertImage: any, files: any) {
     // 拿到 files 之后上传到文件服务器，然后向编辑框中插入对应的内容
     const formData = new FormData();
     formData.append('file', files[0]);
-    let res = await theArticleImageUploadApi(formData)
+    let res
+    if (isEditor.value) {
+        res = await theChangeArticleImageUploadApi(formData, articleInfo.value.id)
+    } else {
+        res = await theArticleImageUploadApi(formData)
+    }
     insertImage({
         url: BASEURL + res.data.uploadpaths[0].url,
         desc: res.data.uploadpaths[0].name,
@@ -99,50 +118,41 @@ function cancel() {
 
 // 发布文章
 async function release() {
-    if (articleInfo.title.trim() == '') {
+    if (articleData.title.trim() == '') {
         warningNotify({ message: "标题不能为空" })
         return
     }
-    if (articleInfo.content.trim() == '') {
+    if (articleData.content.trim() == '') {
         warningNotify({ message: "内容不能为空" })
         return
     }
     router.push('/home/index')
-    try {
-        const res = await addArticleApi(articleInfo)
+    if (isEditor.value) {
+        const res = await editorArticleApi(articleData, articleInfo.value.id)
         if (res.code === 200) {
             successNotify(res)
         } else {
             warningNotify(res)
         }
-    } catch (error) {
-        console.log('文章发布失败', error)
+    } else {
+        console.log('创建')
+        try {
+            const res = await addArticleApi(articleData)
+            if (res.code === 200) {
+                successNotify(res)
+            } else {
+                warningNotify(res)
+            }
+        } catch (error) {
+            console.log('文章发布失败', error)
+        }
     }
 }
 
 // 自定义事件，设置封面路径
 function setCoverUrl(res: any) {
-    articleInfo.cover_url = res.data.uploadpaths[0].url
+    articleData.cover_url = res.data.uploadpaths[0].url
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>

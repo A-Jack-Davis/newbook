@@ -1,8 +1,10 @@
 <template>
     <div class="home">
-        <div class="head" v-show="!route.meta.hideHeader">
+        <!-- 头部导航 -->
+        <div class="head" v-show="!$route.meta.hideHeader">
             <HeadNav class="fixed"></HeadNav>
         </div>
+        <!-- 主体 -->
         <div class="main">
             <router-view></router-view>
         </div>
@@ -10,19 +12,10 @@
 </template>
     
 <script setup lang='ts'>
-import { useUserStore } from "@/stores/user.js";
-import { onMounted } from 'vue';
 import HeadNav from '@/components/HeadNav/HeadNav.vue'
-import { useRoute } from "vue-router";
-const route = useRoute()
-// 使用user store
-const userStore = useUserStore();
 
-onMounted(async () => {
-    // // 组件激活发送请求获取用户数据
-    // const res = await userStore.getUserInfo()
-    // console.log('res', res)
-})
+
+
 </script>
     
 <style lang='less' scoped>
@@ -49,6 +42,9 @@ onMounted(async () => {
     .main {
         width: 100%;
         background-color: #f4f5f5;
+
+
+
     }
 }
 </style>    

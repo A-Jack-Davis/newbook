@@ -4,23 +4,35 @@
         <div class="md_preview">
             <!-- 头部标题区 -->
             <div class="content">
-                <h4>{{ articleInfo.title }}</h4>
+                <h4>{{  articleInfo.title  }}</h4>
                 <!-- 头像/用户名区 -->
                 <div class="userdata">
                     <div class="l">
-                        <img :src="BASEURL + articleInfo.user.avatar" alt="">
+                        <img :src="BASEURL + articleInfo.user.avatar" @click="toOtherUser">
                         <div class="username">
-                            <span>{{ articleInfo.user.nickname }}</span>
-                            <span>{{ _getdate(articleInfo.createdAt) }}</span>
+                            <span>{{  articleInfo.user.nickname  }}</span>
+                            <div>
+                                <span>{{  _getdate(articleInfo.createdAt)  }}</span>
+                                <button class="editor" @click="toEditor"
+                                    v-if="userInfo.id == articleInfo.user.id">编辑</button>
+                            </div>
                         </div>
                     </div>
-                    <el-button class="r" type="primary" size="default" plain>+关注</el-button>
+                    <button @mouseenter="attention_but_enter" @mouseleave="attention_but_lever" @click="attention"
+                        class="focus_on" :class="{
+                            'focus_on_true': attentionFlag,
+                            'focus_on_fasle_hover': focus_on_fasle_hover
+                        }">
+                        <i class="iconfont" :class="{ 'icon-zengjia': !attentionFlag, 'icon-duihao_o': attentionFlag }">
+                        </i>
+                        {{  attentionString  }}
+                    </button>
                 </div>
                 <!-- 封面 -->
                 <img :src="BASEURL + articleInfo.cover_url" alt="" class="cover">
                 <!-- 简介 -->
                 <div class="introduction" v-if="articleInfo.introduction">
-                    <p>{{ articleInfo.introduction }}</p>
+                    <p>{{  articleInfo.introduction  }}</p>
                 </div>
             </div>
             <!-- 文章 -->
@@ -48,19 +60,59 @@
             </div>
 
         </div>
+
+
         <!-- 右侧目录与其他 -->
         <div class="right">
-            <div class="box2">
+            <!-- 作者统计 -->
+            <div class="achievement_box">
+                <div class="avatar" @click="toOtherUser">
+                    <img :src="BASEURL + articleInfo.user.avatar">
+                    <span>{{  articleInfo.user.nickname  }}</span>
+                </div>
+
+                <!-- <h4>个人成就</h4> -->
+                <ul class="achievement">
+                    <li><i class="iconfont icon-dianzan_kuai"></i><span>文章被点赞&#8194;{{
+                             articleStore.articleStatistical.likeCount 
+                            }}</span>
+                    </li>
+                    <li><i class="iconfont icon-yanjing2"></i><span>文章被阅读&#8194;{{
+                             articleStore.articleStatistical.pageviewsCount 
+                            }}</span>
+                    </li>
+                    <li><i class="iconfont icon-shoucang-shoucang"></i><span>文章被收藏&#8194;{{
+                             articleStore.articleStatistical.collectionCount 
+                            }}</span>
+                    </li>
+                    <li><i class="iconfont icon-fabuxiaoxi"></i><span>发布文章数&#8194;{{
+                             articleStore.articleStatistical.articleCount 
+                            }}</span>
+                    </li>
+                </ul>
             </div>
+
+            <!-- 站长微信 -->
+            <div class="wx">
+                <img src="@/assets/imgs/wx.jpg" alt="">
+                <div class="wx_info">
+                    <span>关注站长微信</span>
+                    <span>提供idea与建议</span>
+                </div>
+            </div>
+
+            <RecommendTheArticle :limit="7" class="recommendthearticle"></RecommendTheArticle>
 
             <!-- 目录导航 -->
             <el-affix class="anchor" ref="menu" :offset="80">
                 <h4>目录</h4>
-                <div class="nav">
-                    <div v-for="anchor in titles" :style="{ padding: `8px 0 8px 0` }"
-                        @click="handleAnchorClick(anchor)">
-                        <a style="cursor: pointer" :line-index="anchor.lineIndex"
-                            :style="{ 'padding-left': anchor.indent * 18 + 20 + 'px' }">{{ anchor.title }}</a>
+                <div class="scrollbox">
+                    <div class="nav">
+                        <div v-for="anchor in titles" :style="{ padding: `8px 0 8px 0` }"
+                            @click="handleAnchorClick(anchor)">
+                            <a style="cursor: pointer" :line-index="anchor.lineIndex"
+                                :style="{ 'padding-left': anchor.indent * 18 + 20 + 'px' }">{{  anchor.title  }}</a>
+                        </div>
                     </div>
                 </div>
             </el-affix>
@@ -73,22 +125,29 @@
                 <i class="iconfont icon-dianzan_kuai" :class="{ like: articleInfo.articleLikes.includes(userInfo.id) }">
                 </i>
                 <span class="num" :class="{ like2: articleInfo.articleLikes.includes(userInfo.id) }"> {{
-                        articleInfo.like
-                }}
+                     articleInfo.like 
+                    }}
                 </span>
             </li>
             <!-- 评论数 -->
             <li class="comments" @click="_tocommentBox(0)">
                 <i class="iconfont icon-pinglun4"></i>
-                <span class="num"> {{ commentsStore.commentList.length }} </span>
+                <span class="num"> {{  commentsStore.commentList.length  }} </span>
             </li>
-            <li><i class="iconfont icon-shoucang-shoucang"></i></li>
+            <!-- 收藏 -->
+            <li @click="collector">
+                <i class="iconfont icon-shoucang-shoucang"
+                    :class="{ collector: articleInfo.collectorUserList.includes(userInfo.id) }"></i>
+            </li>
         </ul>
+
     </div>
+
+
     <!--回到顶部 -->
-    <div class="totop" v-show="toTop">
-        <a href="javascript:window.scrollTo(0,0)" class="iconfont icon-18huidaodingbu"></a>
-    </div>
+    <el-backtop :bottom="80">
+        <i class="iconfont icon-18huidaodingbu"></i>
+    </el-backtop>
 </template>
 
 <script setup lang='ts'>
@@ -97,19 +156,21 @@ import { BASEURL } from "@/const/VARIABLE"
 import { useArticleStore } from '@/stores/article';
 import { useUserStore } from '@/stores/user';
 import { storeToRefs } from 'pinia';
-import { nextTick, onMounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 import { addComment } from '@/api/comment';
 import Comment from '../Comment/Comment.vue';
-import { onBeforeRouteLeave, useRoute } from 'vue-router';
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import { successNotify, warningNotify } from '@/utils/notification';
 import { useCommentsStore } from '@/stores/comment';
-import { changeLike } from "@/api/articleLike";
+import { changeLike, collectApi } from "@/api/article";
+import { attentionApi } from "@/api/user";
 const articleStore = useArticleStore()
 const { articleInfo } = storeToRefs(articleStore)
 const userStore = useUserStore()
 const { userInfo } = storeToRefs(userStore)
 const commentsStore = useCommentsStore()
 const route = useRoute()
+const router = useRouter()
 //#endregion
 
 onMounted(() => {
@@ -130,6 +191,11 @@ onMounted(() => {
         _tocommentBox(200)
     }
 
+    // 是否关注
+    attentionFlag.value = articleInfo.value.fonsList.includes(userInfo.value.id)
+
+    //  获取文章统计信息
+    articleStore.getArticleStatistical(articleInfo.value.user.id)
 })
 
 onBeforeRouteLeave((to, from, next) => {
@@ -143,8 +209,6 @@ function _getdate(dateStr: string) {
     return `${date.getFullYear()}年${date.getMonth()}月${date.getDate()}日  ${date.getHours()}:${date.getMinutes()}`
 }
 
-// 是否显示 “回到顶部” 按钮
-const toTop = ref<boolean>(false)
 
 // 发布评论
 //#region 
@@ -199,14 +263,91 @@ async function add_of_delete_like() {
         const i = articleInfo.value.articleLikes.indexOf(userInfo.value.id)
         articleInfo.value.articleLikes.splice(i, 1)
     }
-    console.log(' ', articleInfo.value.articleLikes.includes(userInfo.value.id))
 }
+
+// 用户是否 收藏 返回(true收藏)(false取消收藏)
+async function collector() {
+    const res = await collectApi(userInfo.value.id, articleInfo.value.id)
+    if (res.data) {
+        articleInfo.value.collectorUserList.push(userInfo.value.id)
+    } else {
+        const i = articleInfo.value.collectorUserList.indexOf(userInfo.value.id)
+        articleInfo.value.collectorUserList.splice(i, 1)
+    }
+}
+
+// 关注相关
+//#region 
+// 关注或取消关注
+const attentionFlag = ref<unknown | boolean | null>(false)
+async function attention() {
+    const res = await attentionApi(userInfo.value.id, articleInfo.value.user.id)
+    attentionFlag.value = res.data
+    if (res.data) {
+        articleInfo.value.fonsList.push(userInfo.value.id)
+    } else {
+        const i = articleInfo.value.fonsList.indexOf(userInfo.value.id)
+        articleInfo.value.fonsList.splice(i, 1)
+    }
+}
+// 计算按钮文本内容
+const attentionString = computed(() => {
+    if (attentionFlag.value === true) {
+        focus_on_fasle_hover.value = false
+        return '已关注'
+    } else if (attentionFlag.value === 1) {
+        focus_on_fasle_hover.value = false
+        return "取消关注"
+    } else {
+        focus_on_fasle_hover.value = false
+        return '关注'
+    }
+})
+// 未关注时hover class
+const focus_on_fasle_hover = ref(false)
+
+// 关注按钮 hover 事件
+function attention_but_enter() {
+    if (attentionFlag.value) {
+        attentionFlag.value = 1
+    }
+    if (attentionFlag.value === false) {
+        focus_on_fasle_hover.value = true
+    }
+}
+function attention_but_lever() {
+    if (attentionFlag.value === 1) {
+        attentionFlag.value = true
+    }
+    focus_on_fasle_hover.value = false
+}
+//#endregion
+
+
+// 去文章作者的个人中心页
+async function toOtherUser() {
+    if (articleInfo.value.user.id != userInfo.value.id) {
+        userStore.is_self = false
+        await userStore.getOtherInfo(articleInfo.value.user.id)
+    } else {
+        userStore.is_self = true
+    }
+    router.push(`/home/personalcenter`);
+}
+
+// 编辑文章
+async function toEditor() {
+    router.push(`/home/postarticle?editor=${Date.now()}`)
+}
+
+
+
 
 
 
 let titles = reactive<any>([])
 const preview = ref()
-//事件监控： 锚点跟踪相关--- 附加（是否显示回到顶部）
+//事件监控： 锚点跟踪相关---  
 function _getAnchorElementTop() {
     // 获取v-md-editor中的所有标题信息
     const titleEleList = titles.map((title: any) => {
@@ -226,12 +367,6 @@ function _getAnchorElementTop() {
             const GDTscrollTop = window.pageYOffset ||
                 document.documentElement.scrollTop ||
                 document.body.scrollTop
-            // 是否显示回到顶部
-            if (GDTscrollTop > 800) {
-                toTop.value = true
-            } else {
-                toTop.value = false
-            }
             return ele.offsetTop - GDTscrollTop
         }
         return obj
@@ -270,7 +405,7 @@ function _getAnchorElementTop() {
     if (activeEle !== null) {
         activeEle.classList.add('activestyle')
         // 目录滚动条相关
-        const el_affix_div: any = document.querySelector('.el-affix >div')
+        const el_affix_div: any = document.querySelector('.el-affix >div >div')
         // 滚动条到顶部距离
         let gdtTop = el_affix_div.scrollTop
         // 激活的《a》到 position: relative; 定位父元素距离
@@ -278,11 +413,13 @@ function _getAnchorElementTop() {
         // 滚动元素的  height
         let gdEleH = el_affix_div.offsetHeight
         if (gdEleH - aTop < 50) {
-            el_affix_div.scrollTop = aTop - (gdEleH / 2 - 20)
+            el_affix_div.scrollTop = aTop - (gdEleH / 2)
+        }
+        if (gdtTop > aTop) {
+            el_affix_div.scrollTop = 0
         }
     }
 }
-
 
 // 导航吸顶相关
 //#region 
@@ -385,6 +522,7 @@ function handleAnchorClick(anchor: any) {
                     align-items: center;
 
                     img {
+                        cursor: pointer;
                         width: 38px;
                         height: 38px;
                         border-radius: 50%;
@@ -396,7 +534,7 @@ function handleAnchorClick(anchor: any) {
                         flex-direction: column;
                         justify-content: center;
 
-                        span:nth-child(1) {
+                        >span {
 
                             // color: rgb(81, 87, 103);
                             // color: rgb(93, 93, 239);
@@ -405,17 +543,47 @@ function handleAnchorClick(anchor: any) {
                             line-height: 24px;
                         }
 
-                        span:nth-child(2) {
+                        >div {
                             color: rgb(138, 145, 159);
                             font-size: 13px;
                             line-height: 22px;
+
+                            .editor {
+                                margin-left: 16px;
+                                color: rgb(30, 128, 255);
+                                background-color: transparent;
+                            }
                         }
 
                     }
                 }
 
+                .focus_on {
+                    background-color: #f4f9ff;
+                    color: #1e80ff;
+                    border: 1px solid rgba(30, 128, 255, .3);
+                    height: 26px;
+                    font-size: 14px;
+                    padding: 0 10px;
+                    border-radius: 4px;
 
+                    .iconfont {
+                        font-size: 14px;
+                        padding-right: 5px;
+                        font-weight: 600;
+                    }
+                }
 
+                .focus_on_true {
+                    color: #515767;
+                    background: rgba(81, 87, 103, .05);
+                    border-color: rgba(81, 87, 103, .3);
+                }
+
+                .focus_on_fasle_hover {
+                    background: #e8f2ff;
+                    color: #007ffe;
+                }
             }
 
             .cover {
@@ -496,10 +664,12 @@ function handleAnchorClick(anchor: any) {
         height: 600px;
         // background-color: #ffffff;
 
+        // 目录
         .anchor {
             max-height: 650px;
             min-height: 100px;
             height: auto;
+            overflow: hidden;
 
             >div {
                 position: relative;
@@ -507,17 +677,17 @@ function handleAnchorClick(anchor: any) {
             }
         }
 
+
+        // 目录
         :deep(.el-affix > div) {
             background-color: #ffffff;
             width: 300px;
             max-height: 650px;
             // height: 100%;
             min-height: 100px;
-
             height: auto;
-            overflow: auto;
+            overflow: hidden;
             padding-bottom: 10px;
-
 
             >h4 {
                 position: sticky;
@@ -533,23 +703,131 @@ function handleAnchorClick(anchor: any) {
                 background-color: #ffffff;
             }
 
-            .nav {
-                margin-top: 10px;
-                font-size: 14px;
-                color: black !important;
+            // 滚动盒子
+            .scrollbox {
+                position: relative;
+                max-height: 580px;
+                overflow: auto;
+
+                .nav {
+                    width: 280px;
+                    margin-top: 10px;
+                    font-size: 14px;
+                    color: black !important;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+
+                    a {
+                        padding-left: 20px;
+                        color: black;
+                    }
+
+                }
+            }
 
 
-                a {
-                    padding-left: 20px;
-                    color: black;
+        }
+
+
+        // 作者统计
+        .achievement_box {
+            width: 100%;
+            // height: 400px;
+
+            // height: 200px;
+            background-color: #fff;
+            margin-bottom: 20px;
+
+            .avatar {
+                cursor: pointer;
+                height: 60px;
+                border-bottom: 1px solid rgba(230, 230, 231, .5);
+                display: flex;
+                align-items: center;
+
+                img {
+                    margin-left: 16px;
+                    margin-right: 16px;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
                 }
 
+                span {
+                    font-weight: 500;
+                    color: #252933;
+                    font-size: 15px;
+                }
+            }
+
+            h4 {
+                font-weight: 600;
+                color: #31445b;
+                font-size: 16px;
+                line-height: 20px;
+                padding: 16px;
+                border-bottom: 1px solid rgba(230, 230, 231, .5);
+            }
+
+            .achievement {
+                height: 176px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                list-style: none;
+                padding: 16px;
+
+                li {
+                    display: flex;
+                    align-items: center;
+
+                    i {
+                        text-align: center;
+                        display: inline-block;
+                        color: #7bb9ff;
+                        background-color: #e1efff;
+                        width: 26px;
+                        height: 26px;
+                        line-height: 26px;
+                        border-radius: 50%;
+                        margin-right: 12px;
+                    }
+
+                    font-size: 15px;
+                    line-height: 20px;
+                }
             }
         }
 
-        .box2 {
-            height: 400px;
+        //  站长微信  
+        .wx {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            // justify-content: space-between;
             background-color: #fff;
+            margin: 20px 0;
+            padding: 14px;
+
+            >img {
+                width: 72px;
+                height: 72px;
+            }
+
+            .wx_info {
+
+                margin-left: 20px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                font-size: 10px;
+                line-height: 26px;
+                color: #606266;
+            }
+        }
+
+        .recommendthearticle {
             margin-bottom: 20px;
         }
 
@@ -565,26 +843,28 @@ function handleAnchorClick(anchor: any) {
 }
 
 // 滚动条样式
-:deep(.anchor>div::-webkit-scrollbar) {
+.scrollbox::-webkit-scrollbar {
     /*滚动条整体样式*/
     width: 4px;
     /*高宽分别对应横竖滚动条的尺寸*/
-    height: 1px;
+    height: 4px;
 }
 
-:deep(.anchor>div::-webkit-scrollbar-thumb) {
+.scrollbox::-webkit-scrollbar-thumb {
     /*滚动条里面小方块*/
     // border-radius: 10px;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
-    // background: #7d7d7d;
-    background-color: rgba(0, 0, 0, 0.4);
+    // box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    background: #e4e6eb;
+    // background-color: rgba(0, 0, 0, 0.4);
 }
 
-:deep(.anchor>div::-webkit-scrollbar-track) {
+.scrollbox::-webkit-scrollbar-track {
     /*滚动条里面轨道*/
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    // box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+
     // border-radius: 10px;
-    background: #ededed;
+    // background: #ededed;
+    background-color: #fff;
 }
 
 // 吸顶相关
@@ -660,20 +940,23 @@ function handleAnchorClick(anchor: any) {
     }
 }
 
-.totop {
+// 回到顶部
+.el-backtop {
     width: 50px;
     height: 50px;
-    position: fixed;
-    right: 30px;
-    bottom: 50px;
     border-radius: 50%;
     background-color: #ffffff;
     text-align: center;
+    line-height: 50px;
 
-    a {
-        font-size: 26px;
-        color: #909090;
-        line-height: 50px;
+    i {
+        font-size: 20px;
+        font-weight: 600;
     }
+}
+
+// 收藏 或取消收藏
+.collector {
+    color: #ffb800 !important;
 }
 </style>

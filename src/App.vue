@@ -2,11 +2,10 @@
   <div class="app">
     <router-view></router-view>
   </div>
-
-
 </template>
 
-<script setup lang="ts">import { onMounted } from 'vue';
+<script setup lang="ts">
+import { onMounted } from 'vue';
 
 function IsPC() {
   var userAgentInfo = navigator.userAgent;
@@ -17,9 +16,7 @@ function IsPC() {
   }
   return flag;
 }
-
-onMounted(() => {
-  console.log('IsPC()', IsPC())
+onMounted(async () => {
 })
 
 

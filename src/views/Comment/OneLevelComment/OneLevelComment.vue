@@ -7,24 +7,24 @@
             <div class="hoverbox" @mouseenter="delete_but_show = true" @mouseleave="delete_but_show = false">
                 <!-- 评论者用户名 -->
                 <div class="name">
-                    <span>{{ comment.user_nickname ? comment.user_nickname : comment.user_name }}</span>
+                    <span>{{  comment.user_nickname ? comment.user_nickname : comment.user_name  }}</span>
                     <i v-if="articleStore.articleInfo.user.id == comment.user_id" class="iconfont icon-xinrenzhinan">
                         <i>(作者) </i>
                     </i>
                     <!-- 发布时间 -->
-                    <div class="timeago">{{ timeAgo(comment.createdAt) }}</div>
+                    <div class="timeago">{{  timeAgo(comment.createdAt)  }}</div>
                 </div>
                 <!-- 评论内容 -->
-                <div class="content"> {{ comment.content }}</div>
+                <div class="content"> {{  comment.content  }}</div>
                 <!-- 点赞与回复评论 -->
                 <div class="function">
                     <!-- 点赞 -->
                     <button class="iconfont icon-dianzan" @click="addLike(comment.id)">
-                        &#8197;{{ comment.like > 0 ? comment.like : '点赞' }}
+                        &#8197;{{  comment.like > 0 ? comment.like : '点赞'  }}
                     </button>
                     <!-- 回复 -->
                     <i class="iconfont icon-pinglunxiao" @click="replyComment" :class="{ activeStyle: textarea_show }">
-                        &#8197;{{ textarea_show ? '取消回复' : "回复" }}
+                        &#8197;{{  textarea_show ? '取消回复' : "回复"  }}
                     </i>
                     <!-- 删除 -->
                     <i class="delete" v-show="delete_but_show && userStore.userInfo.id == comment.user_id"
@@ -148,7 +148,7 @@ async function issueComment() {
 async function deleteComment(id: number) {
     console.log('1', 1)
     try {
-        const res = await deleteCommentApi(id, 1)
+        const res = await deleteCommentApi(1, id, articleStore.articleInfo.id)
         if (res.code == 200) {
             successNotify(res)
             commentsStore.getCommentlist(articleStore.articleInfo.id)
@@ -173,7 +173,7 @@ async function addLike(id: number) {
         console.log('点赞失败', error)
     }
 }
-// 一级评论评论信息
+// 待发送一级评论评论信息
 const recomment = reactive<any>({
     re_content: "",
     comment_id: 0,
