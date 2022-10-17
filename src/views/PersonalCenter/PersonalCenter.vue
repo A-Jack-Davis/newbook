@@ -1,118 +1,133 @@
 <template>
-    <el-card class="container" :body-style="{ padding: '0', border: 0 }">
-        <div class="main" :class="{ showDataDown: showData, showDataUp: !showData }">
-            <!-- 背景区域 -->
-            <div class="bgimg" @mouseover="enterBgImg = true" @mouseout="enterBgImg = false">
-                <img :src="BASEURL + userInfo.bgcimg" v-if="userStore.is_self">
-                <img :src="BASEURL + otherInfo.bgcimg" v-else>
-                <el-upload class="bgcupload" :headers="{ Authorization: userStore.token }" v-if="userStore.is_self"
-                    :action="BASEURL + '/users/fileupload/bgcimg'" :on-success="handleAvatarSuccess"
-                    :before-upload="beforeUpload">
-                    <template #trigger>
-                        <el-button :style="{ visibility: enterBgImg ? 'visible' : 'hidden' }" class="r_t_b"
-                            show-file-list="false" size="small" plain :icon="Edit">编辑封面图片</el-button>
-                    </template>
-                </el-upload>
-            </div>
-
-            <!-- 头像大区域 -->
-            <div class="cardinfo">
-                <div class="left">
-                    <ImgUpload v-if="userStore.is_self" v-bind="{
-                        action: BASEURL + '/users/fileupload/avatar',
-                        type: 'avatar',
-                        headers: { Authorization: userStore.token },
-                        style: {
-                            width: '120px',
-                            height: '120px',
-                        }
-                    }"></ImgUpload>
-                    <img :src="BASEURL + otherInfo.avatar" alt="" v-else class="other_avatar">
-
-                    <div class="username">
-                        <h1 v-if="userStore.is_self">{{  userInfo.nickname  }}</h1>
-                        <h1 v-else>{{  otherInfo.nickname  }}</h1>
-                    </div>
+    <div class="calc-scrol">
+        <el-card class="container" :body-style="{ padding: '0', border: 0 }">
+            <div class="main" :class="{ showDataDown: showData, showDataUp: !showData }">
+                <!-- 背景区域 -->
+                <div class="bgimg" @mouseover="enterBgImg = true" @mouseout="enterBgImg = false">
+                    <img :src="BASEURL + userInfo.bgcimg" v-if="userStore.is_self">
+                    <img :src="BASEURL + otherInfo.bgcimg" v-else>
+                    <el-upload class="bgcupload" :headers="{ Authorization: userStore.token }" v-if="userStore.is_self"
+                        :action="BASEURL + '/users/fileupload/bgcimg'" :on-success="handleAvatarSuccess"
+                        :before-upload="beforeUpload">
+                        <template #trigger>
+                            <el-button :style="{ visibility: enterBgImg ? 'visible' : 'hidden' }" class="r_t_b"
+                                show-file-list="false" size="small" plain :icon="Edit">编辑封面图片</el-button>
+                        </template>
+                    </el-upload>
                 </div>
-                <el-button @click="showData = showForm = true" type="primary" size="small" plain
-                    v-if="userStore.is_self">
-                    <i class="iconfont icon-edit-role" style="margin-right: 8px;"></i>编辑个人资料
-                </el-button>
-            </div>
 
+                <!-- 头像大区域 -->
+                <div class="cardinfo">
+                    <div class="left">
+                        <ImgUpload v-if="userStore.is_self" v-bind="{
+                            action: BASEURL + '/users/fileupload/avatar',
+                            type: 'avatar',
+                            headers: { Authorization: userStore.token },
+                            style: {
+                                width: '120px',
+                                height: '120px',
+                            }
+                        }"></ImgUpload>
+                        <img :src="BASEURL + otherInfo.avatar" alt="" v-else class="other_avatar">
 
-            <!-- 表单区域 -->
-            <div class="userCard">
-                <el-form v-model="formInfo">
-                    <el-descriptions title="个人信息" :column="2">
-                        <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="帐号:">
-                            <el-input v-model="formInfo.user_name" disabled size="small" v-if="showForm"></el-input>
-                            <span v-else>{{  formInfo.user_name  }}</span>
-                        </el-descriptions-item>
-                        <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="手机号:">
-                            <el-input v-model="formInfo.phoneNo" size="small" v-if="showForm"></el-input>
-                            <span v-else>{{  userStore.is_self ? formInfo.phoneNo : otherInfo.phoneNo  }}</span>
-                        </el-descriptions-item>
-                        <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="昵称:">
-                            <el-input v-model="formInfo.nickname" size="small" v-if="showForm"></el-input>
-                            <span v-else>{{  userStore.is_self ? formInfo.nickname : otherInfo.nickname  }}</span>
-                        </el-descriptions-item>
-                        <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="地址:">
-                            <el-input v-model="formInfo.address" class="ml10" size="small" v-if="showForm">
-                            </el-input>
-                            <span v-else>{{  userStore.is_self ? formInfo.address : otherInfo.address  }}</span>
-                        </el-descriptions-item>
-                        <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="姓别:">
-                            <el-radio-group class="radio" v-model="formInfo.sex" size="small" v-if='showForm'>
-                                <el-radio-button label="男"></el-radio-button>
-                                <el-radio-button label="女"></el-radio-button>
-                            </el-radio-group>
-                            <span v-else>{{  userStore.is_self ? formInfo.sex : otherInfo.sex  }}</span>
-                        </el-descriptions-item>
-                        <el-descriptions-item width="500px" class-name="content" label-class-name="label" label="学校:">
-                            <el-input v-model="formInfo.school" class="ml10" size="small" v-if="showForm">
-                            </el-input>
-                            <span v-else>{{  userStore.is_self ? formInfo.school : otherInfo.school  }}</span>
-                        </el-descriptions-item>
-                    </el-descriptions>
-
-                    <div class="introduction">
-                        <el-tag effect="dark">简介:</el-tag>
-                        <el-input class="jj" v-model="formInfo.Introduction" v-if='showForm' clearable
-                            :autosize="{ minRows: 4, maxRows: 4 }" type="textarea" resize="none" show-word-limit
-                            maxlength="150"></el-input>
-                        <p v-else>{{  userStore.is_self ? formInfo.Introduction : otherInfo.Introduction  }}</p>
+                        <div class="username">
+                            <h1 v-if="userStore.is_self">{{ userInfo.nickname }}</h1>
+                            <h1 v-else>{{ otherInfo.nickname }}</h1>
+                        </div>
                     </div>
-                </el-form>
-            </div>
+                    <el-button @click="showData = showForm = true" type="primary" size="small" plain
+                        v-if="userStore.is_self">
+                        <i class="iconfont icon-edit-role" style="margin-right: 8px;"></i>编辑个人资料
+                    </el-button>
+                </div>
 
-            <el-button text bg :icon="showData ? ArrowUp : ArrowDown" class="showBut"
-                @click="showData = !showData; showForm = false">
-                查看详细资料
-            </el-button>
 
-            <!-- 取消和修改按钮 -->
-            <el-button-group class="buttongroup" v-show="showData" v-if="userStore.is_self">
-                <el-button type="primary" plain size="small" :icon="ArrowLeft" @click="cancelChange">取消</el-button>
-                <el-button type="primary" plain size="small" @click="submitChanges">
-                    修改<el-icon class="el-icon--right">
-                        <ArrowRight />
-                    </el-icon>
+                <!-- 表单区域 -->
+                <div class="userCard">
+                    <el-form v-model="formInfo">
+                        <el-descriptions title="个人信息" :column="2">
+                            <el-descriptions-item width="500px" class-name="content" label-class-name="label"
+                                label="帐号:">
+                                <el-input v-model="formInfo.user_name" disabled size="small" v-if="showForm"></el-input>
+
+                                <span v-else>{{ userStore.is_self ? formInfo.user_name : otherInfo.user_name }}</span>
+                            </el-descriptions-item>
+                            <el-descriptions-item width="500px" class-name="content" label-class-name="label"
+                                label="手机号:">
+                                <el-input v-model="formInfo.phoneNo" size="small" v-if="showForm"></el-input>
+                                <span v-else>{{ userStore.is_self ? formInfo.phoneNo : otherInfo.phoneNo }}</span>
+                            </el-descriptions-item>
+                            <el-descriptions-item width="500px" class-name="content" label-class-name="label"
+                                label="昵称:">
+                                <el-input v-model="formInfo.nickname" size="small" v-if="showForm"></el-input>
+                                <span v-else>{{ userStore.is_self ? formInfo.nickname : otherInfo.nickname }}</span>
+                            </el-descriptions-item>
+                            <el-descriptions-item width="500px" class-name="content" label-class-name="label"
+                                label="地址:">
+                                <el-input v-model="formInfo.address" class="ml10" size="small" v-if="showForm">
+                                </el-input>
+                                <span v-else>{{ userStore.is_self ? formInfo.address : otherInfo.address }}</span>
+                            </el-descriptions-item>
+                            <el-descriptions-item width="500px" class-name="content" label-class-name="label"
+                                label="姓别:">
+                                <el-radio-group class="radio" v-model="formInfo.sex" size="small" v-if='showForm'>
+                                    <el-radio-button label="男"></el-radio-button>
+                                    <el-radio-button label="女"></el-radio-button>
+                                </el-radio-group>
+                                <span v-else>{{ userStore.is_self ? formInfo.sex : otherInfo.sex }}</span>
+                            </el-descriptions-item>
+                            <el-descriptions-item width="500px" class-name="content" label-class-name="label"
+                                label="学校:">
+                                <el-input v-model="formInfo.school" class="ml10" size="small" v-if="showForm">
+                                </el-input>
+                                <span v-else>{{ userStore.is_self ? formInfo.school : otherInfo.school }}</span>
+                            </el-descriptions-item>
+                        </el-descriptions>
+
+                        <div class="introduction">
+                            <el-tag effect="dark">简介:</el-tag>
+                            <el-input class="jj" v-model="formInfo.Introduction" v-if='showForm' clearable
+                                :autosize="{ minRows: 4, maxRows: 4 }" type="textarea" resize="none" show-word-limit
+                                maxlength="150"></el-input>
+                            <p v-else>{{ userStore.is_self ? formInfo.Introduction : otherInfo.Introduction }}</p>
+                        </div>
+                    </el-form>
+                </div>
+
+                <el-button text bg :icon="showData ? ArrowUp : ArrowDown" class="showBut"
+                    @click="showData = !showData; showForm = false">
+                    查看详细资料
                 </el-button>
-            </el-button-group>
-        </div>
-    </el-card>
+
+                <!-- 取消和修改按钮 -->
+                <el-button-group class="buttongroup" v-show="showData" v-if="userStore.is_self">
+                    <el-button type="primary" plain size="small" :icon="ArrowLeft" @click="cancelChange">取消</el-button>
+                    <el-button type="primary" plain size="small" @click="submitChanges">
+                        修改<el-icon class="el-icon--right">
+                            <ArrowRight />
+                        </el-icon>
+                    </el-button>
+                </el-button-group>
+            </div>
+        </el-card>
 
 
-    <!-- 个人数据相关（文章，用户相关） -->
-    <div class="userCart">
-        <div class="left">
-            <DetailList :key="up.upDetailList"></DetailList>
+        <!-- 个人数据相关（文章，用户相关） -->
+        <div class="userCart">
+            <div class="left">
+                <DetailList :key="up.upDetailList"></DetailList>
+            </div>
+            <el-affix :offset="80">
+                <UserStatistical :key="up.upUserStatistical"></UserStatistical>
+            </el-affix>
         </div>
-        <el-affix :offset="80">
-            <UserStatistical :key="up.upUserStatistical"></UserStatistical>
-        </el-affix>
+
+
+
     </div>
+
+
+
 </template>
     
 <script setup lang='ts'>
@@ -228,7 +243,13 @@ onBeforeRouteLeave((to, from, next) => {
 </script>
     
 <style lang='less' scoped>
+.calc-scrol {
+    padding-left: calc(100vw - 100%);
+
+}
+
 .container {
+
     position: relative;
     max-width: 980px;
     margin: 0 auto;

@@ -8,6 +8,7 @@ export {}
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     AuthorList: typeof import('./src/components/AuthorList/AuthorList.vue')['default']
+    Backtop: typeof import('./src/components/Backtop/Backtop.vue')['default']
     ElAffix: typeof import('element-plus/es')['ElAffix']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBacktop: typeof import('element-plus/es')['ElBacktop']
@@ -35,8 +36,10 @@ declare module '@vue/runtime-core' {
     ElUpload: typeof import('element-plus/es')['ElUpload']
     HeadNav: typeof import('./src/components/HeadNav/HeadNav.vue')['default']
     ImgUpload: typeof import('./src/components/ImgUpload/ImgUpload.vue')['default']
+    Loading: typeof import('./src/components/Loading/Loading.vue')['default']
     RecommendTheArticle: typeof import('./src/components/RecommendTheArticle/RecommendTheArticle.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScrollNavigation: typeof import('./src/components/ScrollNavigation/ScrollNavigation.vue')['default']
   }
 }

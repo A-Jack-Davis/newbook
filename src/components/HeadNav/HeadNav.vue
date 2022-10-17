@@ -11,12 +11,20 @@
                 <el-menu :default-active="$route.path" class="el-menu-demo" router mode="horizontal">
                     <el-menu-item index="/home/index">首页</el-menu-item>
                     <el-menu-item index="/home/focuson">关注</el-menu-item>
+                    <el-menu-item index="/home/newslist">热点</el-menu-item>
                 </el-menu>
             </div>
 
             <!-- 搜索框 -->
             <div class="search">
-                <div>
+                <div v-if="$route.path.includes('/home/news')">
+                    <input v-if="$route.path.includes('/home/news')" type="text" placeholder="探索新闻" v-model='search'
+                        @keyup.enter="$router.push(`/home/newslist?title=${search}`)">
+                    <el-icon style="vertical-align: middle" @click="$router.push(`/home/newslist?title=${search}`)">
+                        <Search />
+                    </el-icon>
+                </div>
+                <div v-else>
                     <input type="text" placeholder="探索帖子" v-model='search'
                         @keyup.enter="$router.push(`/home/index?search=${search}`)">
                     <el-icon style="vertical-align: middle" @click="$router.push(`/home/index?search=${search}`)">
@@ -31,7 +39,12 @@
                 <a class="iconfont icon-APIwangguan"
                     href="https://console-docs.apipost.cn/preview/8b99ace7f9d94247/50b16b4de116ae6e?target_id=cdab8083-cf89-4e0e-8167-80fe248b586a#fce2299c-5a6e-413c-8eaf-7586b079dde8"
                     target="_blank"></a>
+                <a class="yuque" href="https://www.yuque.com/xiaojiuguan-hf105/cbwf0e" target="_blank">
+                    <img src="https://gw.alipayobjects.com/zos/bmw-prod/735cefc9-f976-4c87-8b48-85f713f5b713.svg"
+                        alt="语雀" width="32" height="32">
+                </a>
             </div>
+
 
             <!-- 头像和下拉菜单 -->
             <div class="aratar">
@@ -40,7 +53,9 @@
                 <el-dropdown @command="handleCommand">
                     <span class="el-dropdown-link">
                         <span class="username">
-                            {{ userStore.userInfo.nickname }}
+                            {{ userStore.userInfo.nickname.length >= 4 ? userStore.userInfo.nickname.slice(0, 4) + '...'
+                            : userStore.userInfo.nickname
+                            }}
                             <el-icon>
                                 <ArrowDown />
                             </el-icon>
@@ -298,6 +313,14 @@ const resetForm = (formEl: FormInstance | undefined) => {
             .icon-APIwangguan {
                 color: #0066ff;
             }
+
+            .yuque {
+                display: flex;
+                align-items: center;
+
+            }
+
+
         }
 
         .aratar {
@@ -319,11 +342,8 @@ const resetForm = (formEl: FormInstance | undefined) => {
                     font-size: 16px;
                     color: #0066ff;
                     line-height: 60px;
-
-
+                    // overflow: hidden;
                 }
-
-
             }
         }
 

@@ -10,16 +10,16 @@
     <div class="article" v-for="(article, index) in articleList" :key="article.id" @click="toAticle(article.id)">
         <!-- 作者名  创建时间 -->
         <div class="info">
-            <span class="nickname" @click.stop="toOtherUser(article.user.id)">{{  article.user.nickname  }}</span>
-            <span>{{  timeAgo(article.createdAt)  }}</span>
+            <span class="nickname" @click.stop="toOtherUser(article.user.id)">{{ article.user.nickname }}</span>
+            <span>{{ timeAgo(article.createdAt) }}</span>
         </div>
         <!-- 文章相关内容 -->
         <div class="content">
             <div class="l">
                 <!-- 标题 -->
-                <h4 class="title">{{  article.title  }}</h4>
+                <h4 class="title">{{ article.title }}</h4>
                 <!-- 简介 -->
-                <p> {{  article.introduction ? article.introduction : _toChString(article.content)  }} </p>
+                <p> {{ article.introduction ? article.introduction : _toChString(article.content) }} </p>
                 <!-- 文章访问信息 -->
                 <div class="floot">
                     <!-- 浏览量 -->
@@ -27,7 +27,7 @@
                         <el-icon>
                             <View />
                         </el-icon>
-                        <i>{{  article.pageviews  }}</i>
+                        <i>{{ article.pageviews }}</i>
                     </button>
                     <!-- 点赞 -->
                     <button @click.stop="add_of_delete_like(article.id, index)">
@@ -35,14 +35,14 @@
                             'icon-dianzan': !article.articleLikes.includes(userStore.userInfo.id),
                             'icon-dianzan_kuai': article.articleLikes.includes(userStore.userInfo.id)
                         }"> </i>
-                        <i>{{  article.like  }}</i>
+                        <i>{{ article.like }}</i>
                     </button>
                     <!-- 去评论区 -->
                     <button @click="toComment">
                         <el-icon>
                             <ChatLineRound />
                         </el-icon>
-                        {{  article.comments  }}
+                        {{ article.comments }}
                     </button>
                     <!-- 编辑或删除 -->
                     <el-dropdown v-if="route.path == '/home/personalcenter/userarticle'" trigger="click"
@@ -66,27 +66,16 @@
 
     <!-- 没有文章显示空 -->
     <el-empty v-if="articleList.length === 0" description="空" />
-
     <!-- 加载动画 -->
-    <div class="loading" v-show="loading">
-        <div class="loader">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-        </div>
+    <div v-show="loading">
+        <Loading></Loading>
     </div>
-
     <!-- 没有更多 -->
     <div class="empty" v-if="emptyShow">
-        {{  route.path === '/home/index' ? '我也是有底线哦...' : ' '  }}
+        {{ route.path === '/home/index' ? '我也是有底线哦...' : ' ' }}
     </div>
-
     <!--回到顶部 -->
-    <el-backtop :bottom="80">
-        <i class="iconfont icon-18huidaodingbu"></i>
-    </el-backtop>
+    <Backtop></Backtop>
 </template>
     
 <script setup lang='ts'>
@@ -101,6 +90,8 @@ import { useUserStore } from '@/stores/user';
 import { storeToRefs } from 'pinia';
 import { successNotify, warningNotify } from '@/utils/notification';
 import { useUpComponentsStore } from '@/stores/upComponents';
+import Backtop from '@/components/Backtop/Backtop.vue';
+import Loading from '../../components/Loading/Loading.vue';
 const articleStore = useArticleStore()
 const router = useRouter()
 const userStore = useUserStore()
@@ -147,6 +138,7 @@ async function lazyLoading() {
             loading.value = true
             setTimeout(async () => {
                 const res = await getAticleList()
+                console.log('res', res.code)
                 count.value = res.count
                 if (res.code === 200) {
                     articleList.push(...res.data)
@@ -491,132 +483,5 @@ async function handleCommand(c: { article_id: number, command: string }) {
     color: rgb(134, 144, 156);
     font-size: 14px;
     line-height: 30px;
-}
-
-// 加载动画
-.loading {
-    width: 100%;
-    height: 30px;
-    // margin: 20px 0;
-    position: relative;
-
-
-    .loader {
-        position: absolute;
-        top: 50%;
-        left: 40%;
-        margin-left: 10%;
-        transform: translate3d(-50%, -50%, 0);
-    }
-
-    .dot {
-        width: 10px;
-        height: 10px;
-        background: #3ac;
-        border-radius: 100%;
-        display: inline-block;
-        animation: slide 1s infinite;
-    }
-
-    .dot:nth-child(1) {
-        animation-delay: 0.1s;
-        background: #32aacc;
-    }
-
-    .dot:nth-child(2) {
-        animation-delay: 0.2s;
-        background: #64aacc;
-    }
-
-    .dot:nth-child(3) {
-        animation-delay: 0.3s;
-        background: #96aacc;
-    }
-
-    .dot:nth-child(4) {
-        animation-delay: 0.4s;
-        background: #c8aacc;
-    }
-
-    .dot:nth-child(5) {
-        animation-delay: 0.5s;
-        background: #faaacc;
-    }
-
-    @-moz-keyframes slide {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            opacity: 0.3;
-            transform: scale(2);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    @-webkit-keyframes slide {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            opacity: 0.3;
-            transform: scale(2);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    @-o-keyframes slide {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            opacity: 0.3;
-            transform: scale(2);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    @keyframes slide {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            opacity: 0.3;
-            transform: scale(2);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-}
-
-// 回到顶部
-.el-backtop {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: #ffffff;
-    text-align: center;
-    line-height: 50px;
-
-    i {
-        font-size: 20px;
-        font-weight: 600;
-    }
 }
 </style>

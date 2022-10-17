@@ -274,7 +274,7 @@ const changePasswordMethod = async (formEl: FormInstance) => {
     height: 100%;
     perspective: 2000px; //定义 3D 元素距视图的距离
     background-image: url("@/assets/imgs/bagimg.jpg"); //https://api.dujin.org/bing/1920.php
-    background-image: url(https://api.dujin.org/bing/1920.php);
+    // background-image: url(https://api.dujin.org/bing/1920.php);
 
     >.card {
 

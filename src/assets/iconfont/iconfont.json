@@ -6,6 +6,48 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "11741910",
+      "name": "语雀",
+      "font_class": "tubiaozhizuomoban",
+      "unicode": "e625",
+      "unicode_decimal": 58917
+    },
+    {
+      "icon_id": "1018",
+      "name": "收音机",
+      "font_class": "shouyinji",
+      "unicode": "e605",
+      "unicode_decimal": 58885
+    },
+    {
+      "icon_id": "1263388",
+      "name": "频道",
+      "font_class": "pindao",
+      "unicode": "e650",
+      "unicode_decimal": 58960
+    },
+    {
+      "icon_id": "1454746",
+      "name": "频道播放",
+      "font_class": "pindaobofang",
+      "unicode": "e66e",
+      "unicode_decimal": 58990
+    },
+    {
+      "icon_id": "3873852",
+      "name": "TV频道",
+      "font_class": "icon-test",
+      "unicode": "e655",
+      "unicode_decimal": 58965
+    },
+    {
+      "icon_id": "8765237",
+      "name": "收展开起",
+      "font_class": "shouzhankaiqi",
+      "unicode": "e638",
+      "unicode_decimal": 58936
+    },
+    {
       "icon_id": "4981140",
       "name": "API网关",
       "font_class": "APIwangguan",

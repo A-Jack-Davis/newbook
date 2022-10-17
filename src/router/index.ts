@@ -54,7 +54,6 @@ const routes: Array<RouteRecordRaw> = [
                 path: 'postarticle',
                 component: () => import('@/views/PostArticle/PostArticle.vue'),
                 meta: {
-                    // 
                     hideHeader: true
                 }
             },
@@ -76,6 +75,14 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path: "authors",
                 component: () => import("@/views/Authors/Authors.vue")
+            },
+            {
+                path: "newslist",
+                component: () => import("@/views/NewsList/NewsList.vue")
+            },
+            {
+                path: "news",
+                component: () => import('@/views/News/News.vue')
             }
         ]
     },

@@ -21,6 +21,9 @@ import HeadNav from '@/components/HeadNav/HeadNav.vue'
 <style lang='less' scoped>
 .home {
 
+    // padding-left: calc(100vw - 100%);
+
+    // margin-right: calc(100vw - 100%);
     width: 100%;
     height: 100%;
     background-color: #f4f5f5;
@@ -29,6 +32,7 @@ import HeadNav from '@/components/HeadNav/HeadNav.vue'
         width: 100%;
         height: 60px;
         margin-bottom: 10px;
+
 
 
         .fixed {
@@ -40,8 +44,10 @@ import HeadNav from '@/components/HeadNav/HeadNav.vue'
     }
 
     .main {
+
         width: 100%;
         background-color: #f4f5f5;
+
 
 
 
