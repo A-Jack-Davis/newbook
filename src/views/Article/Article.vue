@@ -4,15 +4,15 @@
         <div class="md_preview">
             <!-- 头部标题区 -->
             <div class="content">
-                <h4>{{  articleInfo.title  }}</h4>
+                <h4>{{ articleInfo.title }}</h4>
                 <!-- 头像/用户名区 -->
                 <div class="userdata">
                     <div class="l">
                         <img :src="BASEURL + articleInfo.user.avatar" @click="toOtherUser">
                         <div class="username">
-                            <span>{{  articleInfo.user.nickname  }}</span>
+                            <span>{{ articleInfo.user.nickname }}</span>
                             <div>
-                                <span>{{  _getdate(articleInfo.createdAt)  }}</span>
+                                <span>{{ _getdate(articleInfo.createdAt) }}</span>
                                 <button class="editor" @click="toEditor"
                                     v-if="userInfo.id == articleInfo.user.id">编辑</button>
                             </div>
@@ -25,14 +25,14 @@
                         }">
                         <i class="iconfont" :class="{ 'icon-zengjia': !attentionFlag, 'icon-duihao_o': attentionFlag }">
                         </i>
-                        {{  attentionString  }}
+                        {{ attentionString }}
                     </button>
                 </div>
                 <!-- 封面 -->
                 <img :src="BASEURL + articleInfo.cover_url" alt="" class="cover">
                 <!-- 简介 -->
                 <div class="introduction" v-if="articleInfo.introduction">
-                    <p>{{  articleInfo.introduction  }}</p>
+                    <p>{{ articleInfo.introduction }}</p>
                 </div>
             </div>
             <!-- 文章 -->
@@ -68,26 +68,26 @@
             <div class="achievement_box">
                 <div class="avatar" @click="toOtherUser">
                     <img :src="BASEURL + articleInfo.user.avatar">
-                    <span>{{  articleInfo.user.nickname  }}</span>
+                    <span>{{ articleInfo.user.nickname }}</span>
                 </div>
 
                 <!-- <h4>个人成就</h4> -->
                 <ul class="achievement">
                     <li><i class="iconfont icon-dianzan_kuai"></i><span>文章被点赞&#8194;{{
-                             articleStore.articleStatistical.likeCount 
-                            }}</span>
+                            articleStore.articleStatistical.likeCount
+                    }}</span>
                     </li>
                     <li><i class="iconfont icon-yanjing2"></i><span>文章被阅读&#8194;{{
-                             articleStore.articleStatistical.pageviewsCount 
-                            }}</span>
+                            articleStore.articleStatistical.pageviewsCount
+                    }}</span>
                     </li>
                     <li><i class="iconfont icon-shoucang-shoucang"></i><span>文章被收藏&#8194;{{
-                             articleStore.articleStatistical.collectionCount 
-                            }}</span>
+                            articleStore.articleStatistical.collectionCount
+                    }}</span>
                     </li>
                     <li><i class="iconfont icon-fabuxiaoxi"></i><span>发布文章数&#8194;{{
-                             articleStore.articleStatistical.articleCount 
-                            }}</span>
+                            articleStore.articleStatistical.articleCount
+                    }}</span>
                     </li>
                 </ul>
             </div>
@@ -101,19 +101,21 @@
                 </div>
             </div>
 
-            <RecommendTheArticle :limit="7" class="recommendthearticle"></RecommendTheArticle>
+            <RecommendTheArticle @toArticle="toArticle" :limit="7" class="recommendthearticle"></RecommendTheArticle>
 
             <!-- 目录导航 -->
             <el-affix class="anchor" ref="menu" :offset="80">
                 <h4>目录</h4>
                 <div class="scrollbox">
+
                     <div class="nav">
                         <div v-for="anchor in titles" :style="{ padding: `8px 0 8px 0` }"
                             @click="handleAnchorClick(anchor)">
                             <a style="cursor: pointer" :line-index="anchor.lineIndex"
-                                :style="{ 'padding-left': anchor.indent * 18 + 20 + 'px' }">{{  anchor.title  }}</a>
+                                :style="{ 'padding-left': anchor.indent * 18 + 20 + 'px' }">{{ anchor.title }}</a>
                         </div>
                     </div>
+
                 </div>
             </el-affix>
         </div>
@@ -125,14 +127,14 @@
                 <i class="iconfont icon-dianzan_kuai" :class="{ like: articleInfo.articleLikes.includes(userInfo.id) }">
                 </i>
                 <span class="num" :class="{ like2: articleInfo.articleLikes.includes(userInfo.id) }"> {{
-                     articleInfo.like 
-                    }}
+                        articleInfo.like
+                }}
                 </span>
             </li>
             <!-- 评论数 -->
             <li class="comments" @click="_tocommentBox(0)">
                 <i class="iconfont icon-pinglun4"></i>
-                <span class="num"> {{  commentsStore.commentList.length  }} </span>
+                <span class="num"> {{ commentsStore.commentList.length }} </span>
             </li>
             <!-- 收藏 -->
             <li @click="collector">
@@ -340,7 +342,11 @@ async function toEditor() {
     router.push(`/home/postarticle?editor=${Date.now()}`)
 }
 
-
+// 重新更新目录
+function toArticle() {
+    titles.length = 0
+    anchor()
+}
 
 
 

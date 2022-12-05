@@ -21,6 +21,9 @@ import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 const articleStore = useArticleStore()
 const router = useRouter()
+
+const emit = defineEmits(['toArticle'])
+
 onMounted(() => {
     articleStore.getAandomArticle(props.limit)
 })
@@ -31,6 +34,7 @@ async function toAticle(id: number) {
         await articleStore.getArticleIno(id)
         router.push('/home/article')
         addPageviewsApi(id)
+        emit('toArticle')
     } catch (error) {
         console.log('error', error)
     }
